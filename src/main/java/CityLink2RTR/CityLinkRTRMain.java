@@ -8,13 +8,16 @@ import data.PacketHandler;
 import data.UID;
 import java.util.Arrays;
 
+import MonitorHTTPServer.*;
+
 import CityLink2RTR.ThreadedUDPClient;
 
 
 public class CityLinkRTRMain {
 	static ThreadedUDPServer UDPServ;
-	
+	static MonitorHTTPServer HTTP;
 	public static void main(String[] args) {
+		
 		UDPServ = new ThreadedUDPServer(60500);
 		UDPServ.receive(new PacketHandler() {
 			@Override
@@ -40,6 +43,8 @@ public class CityLinkRTRMain {
 			}
 		});
 		
+		HTTP = new MonitorHTTPServer();
+	
 	}
 	
 	
