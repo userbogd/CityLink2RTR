@@ -1,4 +1,4 @@
-package CityLink2RTR;
+package UDPConnections;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -6,10 +6,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-
-import data.Connection;
-import data.Packet;
-import data.PacketHandler;
 
 /**
  * A class for handling a multi-threaded instance of a UDP client

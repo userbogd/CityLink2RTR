@@ -1,15 +1,10 @@
-package CityLink2RTR;
+package UDPConnections;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
-
-import data.Connection;
-import data.Packet;
-import data.PacketHandler;
-import data.UID;
 
 /**
  * A class for handling a multi-threaded instance of a UDP server

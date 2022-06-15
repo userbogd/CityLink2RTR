@@ -1,4 +1,4 @@
-package data;
+package UDPConnections;
 
 import java.net.DatagramPacket;
 

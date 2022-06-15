@@ -1,23 +1,22 @@
 package CityLink2RTR;
 
-import java.net.SocketException;
-import data.Connection;
-import data.Packet;
-import data.PacketHandler;
-import data.UID;
-import java.util.Arrays;
 import java.nio.charset.Charset;
 
 import MonitorHTTPServer.*;
-import CityLink2RTR.ThreadedUDPClient;
+import SerialListener.SerialListener;
+import UDPConnections.Packet;
+import UDPConnections.PacketHandler;
+import UDPConnections.ThreadedUDPServer;
+
 
 public class CityLinkRTRMain {
 	static ThreadedUDPServer UDPServ;
 	static MonitorHTTPServer HTTP;
+	static SerialListener Serial;
 	public int Counter;
 
 	public static void main(String[] args) {
-
+/*
 		UDPServ = new ThreadedUDPServer(60500);
 		UDPServ.receive(new PacketHandler() {
 			int Counter;
@@ -43,7 +42,9 @@ public class CityLinkRTRMain {
 				System.out.println("Packet size:" + Integer.toString(Counter));
 			}
 		});
+	*/	
 		HTTP = new MonitorHTTPServer();
+		Serial = new SerialListener();
 	}
 
 	private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
