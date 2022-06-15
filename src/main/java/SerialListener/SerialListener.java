@@ -1,25 +1,24 @@
 package SerialListener;
 
 import java.nio.charset.StandardCharsets;
-
 import com.fazecast.jSerialComm.SerialPort;
 
 public class SerialListener implements Runnable {
-	SerialPort comPort1;
 
-	public SerialListener() {
+	SerialPort comPort;
+
+	public SerialListener(String Port, int Baudrate) {
+		
 		try {
-		comPort1 = SerialPort.getCommPort("COM3");
-		comPort1.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
-		comPort1.setBaudRate(115200);
-		comPort1.openPort();
-		System.out.println("Open serial port");
-		}
-		catch (Exception ex)
-		{
+			comPort = SerialPort.getCommPort(Port);
+			comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
+			comPort.setBaudRate(Baudrate);
+			comPort.openPort();
+			System.out.format("Open serial port %s\r\n", Port);
+		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
 		}
-		run();
+		
 	}
 
 	@Override
@@ -27,16 +26,16 @@ public class SerialListener implements Runnable {
 
 		try {
 			while (true) {
-				while (comPort1.bytesAvailable() == 0)
+				while (comPort.bytesAvailable() == 0)
 					Thread.sleep(100);
-				byte[] readBuffer = new byte[comPort1.bytesAvailable()];
-				int numRead = comPort1.readBytes(readBuffer, readBuffer.length);
+				byte[] readBuffer = new byte[comPort.bytesAvailable()];
+				comPort.readBytes(readBuffer, readBuffer.length);
 				String s = new String(readBuffer, StandardCharsets.UTF_8);
 				System.out.println(s);
 			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
-		comPort1.closePort();
+		comPort.closePort();
 	}
 }

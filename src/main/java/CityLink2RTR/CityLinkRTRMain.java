@@ -12,11 +12,15 @@ import UDPConnections.ThreadedUDPServer;
 public class CityLinkRTRMain {
 	static ThreadedUDPServer UDPServ;
 	static MonitorHTTPServer HTTP;
-	static SerialListener Serial;
+	//static SerialListener Serial1; 
+	//static SerialListener Serial2;
 	public int Counter;
 
 	public static void main(String[] args) {
-/*
+
+
+		
+		
 		UDPServ = new ThreadedUDPServer(60500);
 		UDPServ.receive(new PacketHandler() {
 			int Counter;
@@ -42,9 +46,12 @@ public class CityLinkRTRMain {
 				System.out.println("Packet size:" + Integer.toString(Counter));
 			}
 		});
-	*/	
+		
 		HTTP = new MonitorHTTPServer();
-		Serial = new SerialListener();
+		//Serial1 = new SerialListener("COM3", 115200);
+		new Thread(new SerialListener("/dev/ttyUSB0", 115200)).start();
+		//Serial2  = new SerialListener("COM4", 115200);
+		new Thread( new SerialListener("/dev/ttyUSB1", 115200)).start();
 	}
 
 	private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
