@@ -8,17 +8,19 @@ public class SerialListener implements Runnable {
 	SerialPort comPort;
 
 	public SerialListener(String Port, int Baudrate) {
-		
-		try {
-			comPort = SerialPort.getCommPort(Port);
-			comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
-			comPort.setBaudRate(Baudrate);
-			comPort.openPort();
-			System.out.format("Open serial port %s\r\n", Port);
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
+		comPort = SerialPort.getCommPort(Port);
+		comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
+		comPort.setBaudRate(Baudrate);
+		comPort.openPort();
+		if (comPort.isOpen()) {
+			System.out.format("Serial port %s OK\r\n", Port);
+			run();
 		}
-		
+		else
+		{
+			System.out.format("Error. Can't open serial port %s\r\n", Port);
+			return;
+		}
 	}
 
 	@Override

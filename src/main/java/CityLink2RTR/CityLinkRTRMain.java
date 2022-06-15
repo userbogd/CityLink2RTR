@@ -7,6 +7,7 @@ import java.util.prefs.Preferences;
 
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
+import org.ini4j.Profile.Section;
 
 import MonitorHTTPServer.*;
 import SerialListener.SerialListener;
@@ -17,8 +18,6 @@ import UDPConnections.ThreadedUDPServer;
 public class CityLinkRTRMain {
 	static ThreadedUDPServer UDPServ;
 	static MonitorHTTPServer HTTP;
-	// static SerialListener Serial1;
-	// static SerialListener Serial2;
 	public int Counter;
 	public static Preferences prefs;
 	public static final String FILENAME = "rtrconfig.ini";
@@ -27,67 +26,104 @@ public class CityLinkRTRMain {
 
 		String filename = (args.length > 0) ? args[0] : FILENAME;
 		File conf = new File(filename);
-
+		Ini ini;
 		if (!conf.exists()) {
 			System.out.println("Conf file not found. Created default");
 			try {
-				conf.createNewFile(); // if file already exists will do nothing
-				Ini ini = new Ini(conf);
-				ini.put("block_name", "property_name", "value");
-				ini.put("block_name", "property_name_2", 45);
-				ini.put("block_name", "property_name_3", 50);
-				ini.put("block_name", "property_name_4", 55);
+				conf.createNewFile(); 
+				ini = new Ini(conf);
+				ini.getConfig().setMultiSection(true);
+				ini.getConfig().setMultiOption(true);
+				ini.put("RTR", "version", "1.00.00");
+				ini.put("RTR", "name", "Retranslator #1 at location");
+
+				ini.put("HTTP", "enabled", 1);
+				ini.put("HTTP", "httpport", 8080);
+				ini.put("HTTP", "refreshrate", 5);
+
+				ini.put("UDPSERVER", "enabled", 0);
+				ini.put("UDPSERVER", "udpport", 60500);
+
+				ini.put("UDPCLIENT", "enabled", 0);
+				ini.put("UDPCLIENT", "name", "Name1");
+				ini.put("UDPCLIENT", "url", "127.0.0.1");
+				ini.put("UDPCLIENT", "port", 60500);
+
+				ini.put("UDPCLIENT", "enabled", 0);
+				ini.put("UDPCLIENT", "name", "Name2");
+				ini.put("UDPCLIENT", "url", "127.0.0.1");
+				ini.put("UDPCLIENT", "port", 60501);
+
+				ini.put("SERIAL", "enabled", 0);
+				ini.put("SERIAL", "name", "/dev/ttyUSB0");
+				ini.put("SERIAL", "baudrate", 19200);
+
+				ini.put("SERIAL", "enabled", 0);
+				ini.put("SERIAL", "name", "/dev/ttyUSB1");
+				ini.put("SERIAL", "baudrate", 19200);
+
 				ini.store();
 			} catch (InvalidFileFormatException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 
 		try {
-			Ini ini = new Ini(conf);
-			System.out.println(ini.get("block_name", "property_name"));
-			System.out.println(ini.get("block_name", "property_name_2"));
-			System.out.println(ini.get("block_name", "property_name_3"));
-			System.out.println(ini.get("block_name", "property_name_4"));
+			ini = new Ini(conf);
+			ini.getConfig().setMultiSection(true);
+			ini.getConfig().setMultiOption(true);
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println("Default ini file creation ERROR");
+			return;
 		}
 
-		UDPServ = new ThreadedUDPServer(60500);
-		UDPServ.receive(new PacketHandler() {
-			int Counter;
-
-			@Override
-			public void process(Packet packet) {
-				String data = new String(packet.getData());
-				Counter = 0;
-				if (data.length() >= 13) {
-					byte[] byteArray;
-					byte[] b;
-					byteArray = data.getBytes(Charset.forName("Windows-1251"));
-					b = new byte[13];
-					for (int k = 0; k < 1000; k += 13) {
-						for (int kk = 0; kk < 13; ++kk)
-							b[kk] = byteArray[k + kk];
-						if (b[0] != 0) {
-							System.out.println(bytesToHex(b));
-							++Counter;
+		if (ini.get("UDPSERVER", "enabled", int.class) > 0) {
+			UDPServ = new ThreadedUDPServer(ini.get("UDPSERVER", "udpport", int.class));
+			UDPServ.receive(new PacketHandler() {
+				@Override
+				public void process(Packet packet) {
+					String data = new String(packet.getData());
+					if (data.length() >= 13) {
+						byte[] byteArray;
+						byte[] b;
+						byteArray = data.getBytes(Charset.forName("Windows-1251"));
+						b = new byte[13];
+						for (int k = 0; k < 1000; k += 13) {
+							for (int kk = 0; kk < 13; ++kk)
+								b[kk] = byteArray[k + kk];
+							if (b[0] != 0) {
+								System.out.println(bytesToHex(b));
+							}
 						}
 					}
 				}
-				System.out.println("Packet size:" + Integer.toString(Counter));
-			}
-		});
+			});
+		}
 
-		HTTP = new MonitorHTTPServer();
-		// Serial1 = new SerialListener("COM3", 115200);
-		new Thread(new SerialListener("/dev/ttyUSB0", 115200)).start();
-		// Serial2 = new SerialListener("COM4", 115200);
-		new Thread(new SerialListener("/dev/ttyUSB1", 115200)).start();
+		if (ini.get("HTTP", "enabled", int.class) > 0)
+			HTTP = new MonitorHTTPServer();
+
+		Section sec = ini.get("SERIAL");
+		int[] en = sec.getAll("enabled", int[].class);
+		String[] nm = sec.getAll("name", String[].class);
+		int[] br = sec.getAll("baudrate", int[].class);
+		for (int i = 0; i < en.length; ++i) {
+			if (en[i] > 0)
+				new Thread(new SerialListener(nm[i], br[i]));
+		}
+		sec = ini.get("UDPCLIENT");
+		int[] uen = sec.getAll("enabled", int[].class);
+		String[] unm = sec.getAll("name", String[].class);
+		String[] url = sec.getAll("url", String[].class);
+		int[] uport = sec.getAll("port", int[].class);
+
+		for (int i = 0; i < uen.length; ++i) {
+
+		}
+
 	}
 
 	private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
