@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Date;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -25,9 +26,17 @@ public class CityLinkRTRMain {
 	public static final String INI_FILE_NAME = "rtrconfig.ini";
 	public static Ini ini;
 	public static final String LOG_FILE_NAME = "rtr.%u.log";
+	public static Date StartDate;
 	private static Logger log = Logger.getLogger(CityLinkRTRMain.class.getName());
+
+	
+	public CityLinkRTRMain() {
+		
+	}
+
 	public static void main(String[] args) {
 		log.info("Start retranslator");
+		StartDate = new Date(); //fix start date
 		String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
 		File conf = new File(filename);
 
@@ -38,7 +47,7 @@ public class CityLinkRTRMain {
 				ini = new Ini(conf);
 				ini.getConfig().setMultiSection(true);
 				ini.getConfig().setMultiOption(true);
-				ini.put("RTR", "version", "1.00.00");
+				ini.put("RTR", "version", "1.00");
 				ini.put("RTR", "name", "Retranslator #1 at location");
 
 				ini.put("HTTP", "enabled", 1);
@@ -100,7 +109,7 @@ public class CityLinkRTRMain {
 		}
 
 		if (ini.get("HTTP", "enabled", int.class) > 0)
-			HTTP = new MonitorHTTPServer();
+			HTTP = new MonitorHTTPServer(ini.get("HTTP", "httpport", int.class));
 		// Read all SERIAL sections and start threads
 		Section sec = ini.get("SERIAL");
 		int[] en = sec.getAll("enabled", int[].class);
