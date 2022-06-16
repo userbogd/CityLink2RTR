@@ -60,7 +60,6 @@ public class MonitorHTTPServer {
 			builder.append("Название ретранслятора: &nbsp; <font color=#006699><b>" + rtrName + "</font></b><br>");
 			SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 			Date date = new Date();
-			System.out.println(formatter.format(date));
 			builder.append("Текущее время ретранслятора: <font color=#006699><b>" + formatter.format(date)
 					+ "</font></b><br>");
 			builder.append("Ретранслятор запущен: <font color=#006699><b>" + formatter.format(CityLinkRTRMain.StartDate)

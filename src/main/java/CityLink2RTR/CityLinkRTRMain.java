@@ -29,14 +29,13 @@ public class CityLinkRTRMain {
 	public static Date StartDate;
 	private static Logger log = Logger.getLogger(CityLinkRTRMain.class.getName());
 
-	
 	public CityLinkRTRMain() {
-		
+
 	}
 
 	public static void main(String[] args) {
 		log.info("Start retranslator");
-		StartDate = new Date(); //fix start date
+		StartDate = new Date(); // fix start date
 		String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
 		File conf = new File(filename);
 
@@ -115,9 +114,12 @@ public class CityLinkRTRMain {
 		int[] en = sec.getAll("enabled", int[].class);
 		String[] nm = sec.getAll("name", String[].class);
 		int[] br = sec.getAll("baudrate", int[].class);
+		
 		for (int i = 0; i < en.length; ++i) {
-			if (en[i] > 0)
-				new Thread(new SerialPortReader(nm[i], br[i])).start();
+			if (en[i] > 0) {
+				SerialPortInstance sPort = new SerialPortInstance(en[i], nm[i], br[i]);
+				sPort.startSerialReader();
+			}
 		}
 		// Read all UDPCLIENT sections and start threads
 		sec = ini.get("UDPCLIENT");

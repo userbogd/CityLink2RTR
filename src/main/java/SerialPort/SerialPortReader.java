@@ -2,12 +2,16 @@ package SerialPort;
 
 import java.nio.charset.StandardCharsets;
 import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortInvalidPortException;
+import CityLink2RTR.CityLinkRTRMain;
+
+import CityLink2RTR.SerialPortInstance;
 
 public class SerialPortReader implements Runnable {
 
 	SerialPort comPort;
 
-	public SerialPortReader(String Port, int Baudrate) {
+	public SerialPortReader(String Port, int Baudrate, SerialPortInstance sPort) {
 		comPort = SerialPort.getCommPort(Port);
 		comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
 		comPort.setBaudRate(Baudrate);
