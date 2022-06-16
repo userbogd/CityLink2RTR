@@ -1,31 +1,28 @@
-package SerialListener;
+package SerialPort;
 
 import java.nio.charset.StandardCharsets;
 import com.fazecast.jSerialComm.SerialPort;
 
-public class SerialListener implements Runnable {
+public class SerialPortReader implements Runnable {
 
 	SerialPort comPort;
 
-	public SerialListener(String Port, int Baudrate) {
+	public SerialPortReader(String Port, int Baudrate) {
 		comPort = SerialPort.getCommPort(Port);
 		comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
 		comPort.setBaudRate(Baudrate);
 		comPort.openPort();
-		if (comPort.isOpen()) {
-			System.out.format("Serial port %s OK\r\n", Port);
-			run();
-		}
-		else
-		{
-			System.out.format("Error. Can't open serial port %s\r\n", Port);
-			return;
-		}
 	}
 
 	@Override
 	public void run() {
 
+		if (comPort.isOpen()) {
+			System.out.format("Serial port %s OK\r\n", comPort.getSystemPortName());
+		} else {
+			System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
+			return;
+		}
 		try {
 			while (true) {
 				while (comPort.bytesAvailable() == 0)
@@ -39,5 +36,7 @@ public class SerialListener implements Runnable {
 			System.out.println(e.getMessage());
 		}
 		comPort.closePort();
+		
+		
 	}
 }
