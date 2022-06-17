@@ -6,7 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -15,136 +19,172 @@ import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Profile.Section;
 
 import MonitorHTTPServer.*;
+import SerialPort.SerialPortInstance;
 import SerialPort.SerialPortReader;
+import UDPConnections.ClientUDPInstance;
 import UDPConnections.Packet;
 import UDPConnections.PacketHandler;
 import UDPConnections.ThreadedUDPServer;
 
-public class CityLinkRTRMain {
-	static ThreadedUDPServer UDPServ;
-	static MonitorHTTPServer HTTP;
-	public static final String INI_FILE_NAME = "rtrconfig.ini";
-	public static Ini ini;
-	public static final String LOG_FILE_NAME = "rtr.%u.log";
-	public static Date StartDate;
-	private static Logger log = Logger.getLogger(CityLinkRTRMain.class.getName());
+import java.util.Timer;
+import java.util.TimerTask;
 
-	public CityLinkRTRMain() {
+class SendUDPClientRoutine extends TimerTask
+  {
+    public void run()
+      {
+        byte[] sendArr;
+        sendArr = new byte[1300];
+        for (int i = 0; i < CityLinkRTRMain.mainDataBuffer.size() && i < 100; ++i)
+          {
+            System.arraycopy(CityLinkRTRMain.mainDataBuffer.poll().rawByteArray, 0, sendArr, 13 * i, 13);
+          }
 
-	}
+        for (int i = 0; i < CityLinkRTRMain.udpPool.size(); ++i)
+          {
+            CityLinkRTRMain.udpPool.get(i).sendUDPClient(sendArr);
+          }
+      }
+  }
 
-	public static void main(String[] args) {
-		log.info("Start retranslator");
-		StartDate = new Date(); // fix start date
-		String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
-		File conf = new File(filename);
+public class CityLinkRTRMain
+  {
+    static ThreadedUDPServer UDPServ;
+    static MonitorHTTPServer HTTP;
+    public static final String INI_FILE_NAME = "rtrconfig.ini";
+    public static Ini ini;
+    public static final String LOG_FILE_NAME = "rtr.%u.log";
+    public static Date StartDate;
+    private static Logger log = Logger.getLogger(CityLinkRTRMain.class.getName());
+    public static List<SerialPortInstance> serialPool;
+    public static List<ClientUDPInstance> udpPool;
+    public static Queue<CityLinkEventPacket> mainDataBuffer;
 
-		if (!conf.exists()) {
-			System.out.println("Conf file not found. Created default");
-			try {
-				conf.createNewFile();
-				ini = new Ini(conf);
-				ini.getConfig().setMultiSection(true);
-				ini.getConfig().setMultiOption(true);
-				ini.put("RTR", "version", "1.00");
-				ini.put("RTR", "name", "Retranslator #1 at location");
+    public CityLinkRTRMain()
+      {
 
-				ini.put("HTTP", "enabled", 1);
-				ini.put("HTTP", "httpport", 8080);
-				ini.put("HTTP", "refreshrate", 5);
+      }
 
-				ini.put("UDPSERVER", "enabled", 0);
-				ini.put("UDPSERVER", "udpport", 60500);
+    public static void main(String[] args)
+      {
+        log.info("Start retranslator");
+        StartDate = new Date(); // fix start date
 
-				ini.put("UDPCLIENT", "enabled", 0);
-				ini.put("UDPCLIENT", "name", "Name1");
-				ini.put("UDPCLIENT", "url", "127.0.0.1");
-				ini.put("UDPCLIENT", "port", 60500);
+        serialPool = new ArrayList<>();
+        udpPool = new ArrayList<>();
+        mainDataBuffer = new LinkedList<>();
 
-				ini.put("SERIAL", "enabled", 0);
-				ini.put("SERIAL", "name", "/dev/ttyUSB0");
-				ini.put("SERIAL", "baudrate", 19200);
+        Timer udpClientSendTimer = new Timer();
+        TimerTask udpClientSendTimerTask = new SendUDPClientRoutine();
 
-				ini.store();
-			} catch (InvalidFileFormatException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+        String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
+        File conf = new File(filename);
+        if (!conf.exists())
+          {
+            System.out.println("Conf file not found. Created default");
+            try
+              {
+                conf.createNewFile();
+                ini = new Ini(conf);
+                ini.getConfig().setMultiSection(true);
+                ini.getConfig().setMultiOption(true);
+                ini.put("RTR", "version", "1.00");
+                ini.put("RTR", "name", "Retranslator #1 at location");
 
-		try {
-			ini = new Ini(conf);
-			ini.getConfig().setMultiSection(true);
-			ini.getConfig().setMultiOption(true);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println("Default ini file creation ERROR");
-			return;
-		}
+                ini.put("HTTP", "enabled", 1);
+                ini.put("HTTP", "httpport", 8080);
+                ini.put("HTTP", "refreshrate", 5);
 
-		if (ini.get("UDPSERVER", "enabled", int.class) > 0) {
-			UDPServ = new ThreadedUDPServer(ini.get("UDPSERVER", "udpport", int.class));
-			UDPServ.receive(new PacketHandler() {
-				@Override
-				public void process(Packet packet) {
-					String data = new String(packet.getData());
-					if (data.length() >= 13) {
-						byte[] byteArray;
-						byte[] b;
-						byteArray = data.getBytes(Charset.forName("Windows-1251"));
-						b = new byte[13];
-						for (int k = 0; k < 1000; k += 13) {
-							for (int kk = 0; kk < 13; ++kk)
-								b[kk] = byteArray[k + kk];
-							if (b[0] != 0) {
-								// return message
-								System.out.println(bytesToHex(b));
-							}
-						}
-					}
-				}
-			});
-		}
+                ini.put("UDPSERVER", "enabled", 0);
+                ini.put("UDPSERVER", "udpport", 60500);
 
-		if (ini.get("HTTP", "enabled", int.class) > 0)
-			HTTP = new MonitorHTTPServer(ini.get("HTTP", "httpport", int.class));
-		// Read all SERIAL sections and start threads
-		Section sec = ini.get("SERIAL");
-		int[] en = sec.getAll("enabled", int[].class);
-		String[] nm = sec.getAll("name", String[].class);
-		int[] br = sec.getAll("baudrate", int[].class);
-		
-		for (int i = 0; i < en.length; ++i) {
-			if (en[i] > 0) {
-				SerialPortInstance sPort = new SerialPortInstance(en[i], nm[i], br[i]);
-				sPort.startSerialReader();
-			}
-		}
-		// Read all UDPCLIENT sections and start threads
-		sec = ini.get("UDPCLIENT");
-		int[] uen = sec.getAll("enabled", int[].class);
-		String[] unm = sec.getAll("name", String[].class);
-		String[] url = sec.getAll("url", String[].class);
-		int[] uport = sec.getAll("port", int[].class);
-		for (int i = 0; i < uen.length; ++i) {
-			if (en[i] > 0) {
+                ini.put("UDPCLIENT", "enabled", 0);
+                ini.put("UDPCLIENT", "name", "Name1");
+                ini.put("UDPCLIENT", "url", "127.0.0.1");
+                ini.put("UDPCLIENT", "port", 60500);
 
-			}
-		}
+                ini.put("SERIAL", "enabled", 0);
+                ini.put("SERIAL", "name", "/dev/ttyUSB0");
+                ini.put("SERIAL", "baudrate", 19200);
 
-	}
+                ini.store();
+              } catch (InvalidFileFormatException e)
+              {
+                e.printStackTrace();
+              } catch (IOException e)
+              {
+                e.printStackTrace();
+              }
+          }
 
-	private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+        try
+          {
+            ini = new Ini(conf);
+            ini.getConfig().setMultiSection(true);
+            ini.getConfig().setMultiOption(true);
+          } catch (IOException e)
+          {
+            e.printStackTrace();
+            System.out.println("Default ini file creation ERROR");
+            return;
+          }
 
-	public static String bytesToHex(byte[] bytes) {
-		char[] hexChars = new char[bytes.length * 2];
-		for (int j = 0; j < bytes.length; j++) {
-			int v = bytes[j] & 0xFF;
-			hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-			hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
-		}
-		return new String(hexChars);
-	}
+        if (ini.get("UDPSERVER", "enabled", int.class) > 0)
+          {
+            UDPServ = new ThreadedUDPServer(ini.get("UDPSERVER", "udpport", int.class));
+            UDPServ.receive(new PacketHandler()
+              {
+                @Override
+                public void process(Packet packet)
+                  {
+                    String data = new String(packet.getData());
+                    if (data.length() >= 13)
+                      {
+                        byte[] byteArray;
+                        byteArray = data.getBytes(Charset.forName("Windows-1251"));
+                        for (int k = 0; k < 1300; k += 13)
+                          {
+                            if (byteArray[k] != 0)
+                              {
+                                CityLinkEventPacket pt = new CityLinkEventPacket();
+                                System.arraycopy(byteArray, k, pt.rawByteArray, 0, 13);
+                                synchronized (this)
+                                  {
+                                    mainDataBuffer.offer(pt);
+                                  }
+                              }
+                          }
+                      }
+                  }
+              });
+          }
 
-}
+        if (ini.get("HTTP", "enabled", int.class) > 0)
+          HTTP = new MonitorHTTPServer(ini.get("HTTP", "httpport", int.class));
+
+        // Read all SERIAL sections and start threads
+        Section sec = ini.get("SERIAL");
+        System.out.format("Found and intialize %d serial ports\r\n",sec.length("enabled"));
+        for (int i = 0; i < sec.length("enabled"); ++i)
+          {
+            SerialPortInstance sPort = new SerialPortInstance(Integer.parseInt(sec.get("enabled", i)),
+                sec.get("name", i), Integer.parseInt(sec.get("baudrate", i)));
+            serialPool.add(sPort);
+            // sPort.startSerialReader();
+          }
+
+        // Read all UDPCLIENT sections and start threads
+        sec = ini.get("UDPCLIENT");
+        System.out.format("Found %d udp client destinations\r\n",sec.length("enabled"));
+        for (int i = 0; i < sec.length("enabled"); ++i)
+          {
+            ClientUDPInstance udpClient = new ClientUDPInstance(Integer.parseInt(sec.get("enabled", i)),
+                sec.get("name", i), sec.get("url", i), Integer.parseInt(sec.get("port", i)));
+            udpPool.add(udpClient);
+            udpClient.startUDPClient();
+          }
+        System.out.println("Retranslator initialise complete");
+        udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
+      }
+
+  }

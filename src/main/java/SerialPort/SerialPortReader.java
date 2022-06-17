@@ -5,8 +5,6 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortInvalidPortException;
 import CityLink2RTR.CityLinkRTRMain;
 
-import CityLink2RTR.SerialPortInstance;
-
 public class SerialPortReader implements Runnable {
 
 	SerialPort comPort;
