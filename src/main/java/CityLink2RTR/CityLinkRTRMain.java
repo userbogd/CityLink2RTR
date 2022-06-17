@@ -67,7 +67,7 @@ public class CityLinkRTRMain
 
     public static void main(String[] args)
       {
-        log.info("Start retranslator");
+        System.out.println("Start retranslator");
         StartDate = new Date(); // fix start date
 
         serialPool = new ArrayList<>();
@@ -183,8 +183,8 @@ public class CityLinkRTRMain
             udpPool.add(udpClient);
             udpClient.startUDPClient();
           }
-        System.out.println("Retranslator initialise complete");
         udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
+        System.out.println("Retranslator initialise complete");
       }
 
   }
