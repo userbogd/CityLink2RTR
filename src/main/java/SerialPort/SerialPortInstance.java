@@ -7,6 +7,7 @@ public class SerialPortInstance
     public int baudrate;
     public boolean isDataPresent;
     public int PacketErrors;
+    public String State;
 
     public SerialPortInstance(int isEnabled, String name, int baudrate)
       {
@@ -14,7 +15,8 @@ public class SerialPortInstance
         this.name = name;
         this.baudrate = baudrate;
         this.isDataPresent = false;
-        PacketErrors = 0;
+        this.PacketErrors = 0;
+        this.State = "ERROR";
       }
 
     public void startSerialReader()

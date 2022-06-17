@@ -10,126 +10,133 @@ import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MonitorHTTPServer {
+public class MonitorHTTPServer
+  {
 
-	public MonitorHTTPServer(int port) {
+    public MonitorHTTPServer(int port)
+      {
 
-		HttpServer server;
-		try {
-			server = HttpServer.create();
-			server.bind(new InetSocketAddress(port), 0);
-			server.setExecutor(null);
-			server.start();
-			System.out.format("HTTP server started on port %d\r\n", port);
-			HttpContext context = server.createContext("/", new EchoHandler());
-			context.setAuthenticator(new Auth());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        HttpServer server;
+        try
+          {
+            server = HttpServer.create();
+            server.bind(new InetSocketAddress(port), 0);
+            server.setExecutor(null);
+            server.start();
+            System.out.format("HTTP server started on port %d\r\n", port);
+            HttpContext context = server.createContext("/", new EchoHandler());
+            context.setAuthenticator(new Auth());
+          } catch (IOException e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
 
-		// TODO Auto-generated constructor stub
-	}
+        // TODO Auto-generated constructor stub
+      }
 
-	static class EchoHandler implements HttpHandler {
-		@Override
-		public void handle(HttpExchange exchange) throws IOException {
-			StringBuilder builder = new StringBuilder();
-			System.out.format("Got %s request from %s\r\n", exchange.getRequestMethod(), exchange.getRemoteAddress());
+    static class EchoHandler implements HttpHandler
+      {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException
+          {
+            StringBuilder builder = new StringBuilder();
+            System.out.format("Got %s request from %s\r\n", exchange.getRequestMethod(), exchange.getRemoteAddress());
 
-			byte[] buffer = new byte[1024];
-			if (exchange.getRequestBody().read(buffer) > 0) {
-				String s = new String(buffer);
-				System.out.print(s);
-			}
+            byte[] buffer = new byte[1024];
+            if (exchange.getRequestBody().read(buffer) > 0)
+              {
+                String s = new String(buffer);
+                System.out.print(s);
+              }
 
-			String rtrName = CityLinkRTRMain.ini.get("RTR", "name");
-			String rtrVer = CityLinkRTRMain.ini.get("RTR", "version");
+            String rtrName = CityLinkRTRMain.ini.get("RTR", "name");
+            String rtrVer = CityLinkRTRMain.ini.get("RTR", "version");
 
-			builder.append("<head><title>TRS RTR Ver_" + rtrVer + "</title>");
-			builder.append("<meta http-equiv='Refresh' content='5' charset=utf-8'></head>");
-			builder.append("<body>");
-			builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>");
-			builder.append(
-					"<tr><td align='left'><font size = '+2' face='Monospace' ><b>Программный UDP ретранслятор системы 'CityLink'  Ver_"
-							+ rtrVer + "</b></font></td></tr>");
-			builder.append("</table>");
-			builder.append("<table align = 'center' width='800' border ='1' cellspacing='2' cellpadding='2'><tr><td>");
-			builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>");
-			builder.append("<tr><font size = '+1' face='Monospace' >");
-			builder.append("Название ретранслятора: &nbsp; <font color=#006699><b>" + rtrName + "</font></b><br>");
-			SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-			Date date = new Date();
-			builder.append("Текущее время ретранслятора: <font color=#006699><b>" + formatter.format(date)
-					+ "</font></b><br>");
-			builder.append("Ретранслятор запущен: <font color=#006699><b>" + formatter.format(CityLinkRTRMain.StartDate)
-					+ "</font></b><br>");
-			long delta = (date.getTime() - CityLinkRTRMain.StartDate.getTime()) / 1000;
-			long d = delta / 86400;
-			long h = (delta % 86400) / 3600;
-			long m = ((delta % 86400) % 3600) / 60;
-			long s = ((delta % 86400) % 3600) % 60;
-			String dur = String.format("%dд %d:%02d:%02d", d, h, m, s);
-			builder.append("Время непрерывной работы: <font color=#006699><b>" + dur + "</font></b><br><br>");
-			
-			builder.append("Входные данные на СОМ1: &nbsp; '" + "OK" + "'<br>");
-			builder.append("Входные данные на СОМ2: &nbsp; '" + "OK" + "'<br>");
-			builder.append("Ошибок на COM1: <font color=#FF0000><b>'" + "0" + "'</font></b><br>");
-			builder.append("Ошибок на COM2: <font color=#FF0000><b>'" + "0" + "'</font></b><br>");
-			
-			builder.append("Ошибок по  UDP: <font color=#FF0000><b>'" + "0" + "'</font></b><br>");
+            builder.append("<head><title>TRS RTR Ver_" + rtrVer + "</title>");
+            builder.append("<meta http-equiv='Refresh' content='5' charset=utf-8'></head>");
+            builder.append("<body>");
+            builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>");
+            builder.append(
+                "<tr><td align='left'><font size = '+2' face='Monospace' ><b>РџСЂРѕРіСЂР°РјРјРЅС‹Р№ UDP СЂРµС‚СЂР°РЅСЃР»СЏС‚РѕСЂ СЃРёСЃС‚РµРјС‹ 'CityLink'  Ver_"
+                    + rtrVer + "</b></font></td></tr>");
+            builder.append("</table>");
+            builder.append("<table align = 'center' width='800' border ='1' cellspacing='2' cellpadding='2'><tr><td>");
+            builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>");
+            builder.append("<tr><font size = '+1' face='Monospace' >");
+            builder.append("РќР°Р·РІР°РЅРёРµ СЂРµС‚СЂР°РЅСЃР»СЏС‚РѕСЂР°: &nbsp; <font color=#006699><b>" + rtrName + "</font></b><br>");
+            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            Date date = new Date();
+            builder.append(
+                "РўРµРєСѓС‰РµРµ РІСЂРµРјСЏ СЂРµС‚СЂР°РЅСЃР»СЏС‚РѕСЂР°: <font color=#006699><b>" + formatter.format(date) + "</font></b><br>");
+            builder.append("Р РµС‚СЂР°РЅСЃР»СЏС‚РѕСЂ Р·Р°РїСѓС‰РµРЅ: <font color=#006699><b>" + formatter.format(CityLinkRTRMain.StartDate)
+                + "</font></b><br>");
+            long delta = (date.getTime() - CityLinkRTRMain.StartDate.getTime()) / 1000;
+            long d = delta / 86400;
+            long h = (delta % 86400) / 3600;
+            long m = ((delta % 86400) % 3600) / 60;
+            long s = ((delta % 86400) % 3600) % 60;
+            String dur = String.format("%dРґ %d:%02d:%02d", d, h, m, s);
+            builder.append("Р’СЂРµРјСЏ РЅРµРїСЂРµСЂС‹РІРЅРѕР№ СЂР°Р±РѕС‚С‹: <font color=#006699><b>" + dur + "</font></b><br><br>");
+            builder.append("РџСЂРёРЅСЏС‚Рѕ&nbsp;&nbsp;СЃРѕР±С‹С‚РёР№:  <font color=#006699><b>'" + "100" + "'</font></b><br>");
+            builder.append("РџРµСЂРµРґР°РЅРѕ СЃРѕР±С‹С‚РёР№: <font color=#006699><b>'" + "100" + "'</font></b><br><br>");
+            builder.append("<b>РџР РРќРРњРђР•Рњ Р”РђРќРќР«Р• РР—:</b><br>");
+            for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
+              {
+                builder.append("РџРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅС‹Р№ РїРѕСЂС‚ ");
+                builder.append(CityLinkRTRMain.serialPool.get(i).name);
+                builder.append("  <font color=#006699><b>[РЎРѕСЃС‚РѕСЏРЅРёРµ:" + CityLinkRTRMain.serialPool.get(i).State + "; "
+                    + "Р”Р°РЅРЅС‹Рµ:" + ((CityLinkRTRMain.serialPool.get(i).isDataPresent) ? "OK" : "ERROR") + ";  "
+                    + "РћС€РёР±РѕРє:" + CityLinkRTRMain.serialPool.get(i).PacketErrors + "]</font></b><br>");
+              }
+            
+            if (CityLinkRTRMain.ini.get("UDPSERVER", "enabled", int.class) >= 1)
+              {
+                builder.append("РЎРµС‚РµРІРѕР№ РїСЂРѕС‚РѕРєРѕР» UDP: <font color=#006699><b>[РџРѕСЂС‚:"+
+              CityLinkRTRMain.ini.get("UDPSERVER", "port", int.class)+";  РћС€РёР±РѕРє:"+
+              ""+"]</b></font>");
+              }
 
-			if (true)
-				builder.append("Принимаем данные на UDP порт: <font color=#006699><b>" + "60500" + "</b></font><br>");
-			else
-				builder.append("Прием UDP от других ретрансляторов отключен<br>");
-			if (true)
-				builder.append(
-						"Принимаем данные \"ETHERBOX\" на порт: <font color=#006699><b>" + "60500" + "</b></font><br>");
-			else
-				builder.append("Прием данных от панелей \"ETHERBOX\" отключен<br>");
+            builder.append("<br><br>");
+            builder.append("<b>РџР•Р Р•Р”РђР•Рњ Р”РђРќРќР«Р• Р’:</b><br>");
+            for (int i = 0; i < CityLinkRTRMain.udpPool.size(); ++i)
+              {
+                builder.append(CityLinkRTRMain.udpPool.get(i).name + " <font color=#006699><b>["
+                    + CityLinkRTRMain.udpPool.get(i).URL + ":" + CityLinkRTRMain.udpPool.get(i).Port
+                    + "]</b></font><br>");
+              }
+      
+            builder.append("<br><br></tr>");
+            builder.append(
+                "<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>РћР±РЅРѕРІРёС‚СЊ</button>");
+            builder.append(
+                "&nbsp<button type='submit' name ='reset_btn' value='Reset'>РЎР±СЂРѕСЃРёС‚СЊ СЃС‡РµС‚С‡РёРєРё</button><td></tr></form>");
 
-			builder.append("Принято&nbsp;&nbsp;событий:  <font color=#006699><b>'" + "100" + "'</font></b><br>");
-			builder.append("Передано событий: <font color=#006699><b>'" + "100" + "'</font></b><br><br>");
+            builder.append("</table>");
+            builder.append("</td></tr></table>");
+            builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>");
+            builder.append(
+                "<tr><td align='right'><font face='Monospace'>&copy; 2015 \"РўРµР»РµРјРµС‚СЂРёС‡РµСЃРєРёРµ СЂР°РґРёРѕСЃРёСЃС‚РµРјС‹\"</font></td></tr>");
+            builder.append("</table></body>");
 
-			builder.append("Передаем данные в следующие адреса:<br>");
-			for (int i = 0; i < 5; i++)
-				if (true)
-					builder.append("&nbsp&nbsp&nbsp<font color=#006699><b>" + "Test Name" + ":" + "test_host" + ":"
-							+ "22222" + "</font></b><br>");
+            byte[] bytes = builder.toString().getBytes();
+            exchange.sendResponseHeaders(200, bytes.length);
 
-			builder.append(
-					"Интервал передачи UDP данных: &nbsp<font color=#006699><b>" + "1000" + "ms</b></font><br><br>");
+            OutputStream os = exchange.getResponseBody();
+            os.write(bytes);
+            os.close();
+          }
+      }
 
-			builder.append("</tr>");
-			builder.append(
-					"<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>Обновить</button>");
-			builder.append(
-					"&nbsp<button type='submit' name ='reset_btn' value='Reset'>Сбросить счетчики</button><td></tr></form>");
-
-			builder.append("</table>");
-			builder.append("</td></tr></table>");
-			builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>");
-			builder.append(
-					"<tr><td align='right'><font face='Monospace'>&copy; 2015 \"Телеметрические радиосистемы\"</font></td></tr>");
-			builder.append("</table></body>");
-
-			byte[] bytes = builder.toString().getBytes();
-			exchange.sendResponseHeaders(200, bytes.length);
-
-			OutputStream os = exchange.getResponseBody();
-			os.write(bytes);
-			os.close();
-		}
-	}
-
-	static class Auth extends Authenticator {
-		@Override
-		public Result authenticate(HttpExchange httpExchange) {
-			if ("/forbidden".equals(httpExchange.getRequestURI().toString()))
-				return new Failure(403);
-			else
-				return new Success(new HttpPrincipal("c0nst", "realm"));
-		}
-	}
-}
+    static class Auth extends Authenticator
+      {
+        @Override
+        public Result authenticate(HttpExchange httpExchange)
+          {
+            if ("/forbidden".equals(httpExchange.getRequestURI().toString()))
+              return new Failure(403);
+            else
+              return new Success(new HttpPrincipal("c0nst", "realm"));
+          }
+      }
+  }
