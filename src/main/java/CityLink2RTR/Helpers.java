@@ -36,7 +36,7 @@ public class Helpers
       {
         if (e.length != 13)
           return -100; // wrong data format
-        int crc = (e[0] + e[1] + e[2] + e[3] + e[4] + e[5] + e[6] + e[7] + e[8]) & 0xFF;
+        int crc = (e[0] + e[1] + e[2] + e[3] + e[4] + e[5] + e[6] + e[7] + e[8]) & 0xff;
         if (e[9] != crc)
           return -1;
         if (e[0] != 0x34)

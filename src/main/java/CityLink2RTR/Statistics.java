@@ -24,7 +24,7 @@ public class Statistics
     
     public synchronized void IncrErrorPacketsUDP(int i)
       {
-        TransmittedPacketsUDP += i;
+        ErrorPacketsUDP += i;
       }
     
     public synchronized long getReceivedPacketsUDP()

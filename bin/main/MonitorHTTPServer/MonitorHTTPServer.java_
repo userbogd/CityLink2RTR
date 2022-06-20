@@ -1,6 +1,5 @@
 package MonitorHTTPServer;
 
-import com.google.common.base.Charsets;
 import com.sun.net.httpserver.*;
 
 import CityLink2RTR.CityLinkRTRMain;
@@ -120,7 +119,7 @@ public class MonitorHTTPServer
                 "<tr><td align='right'><font face='Monospace'>&copy; 2015 \"Телеметрические радиосистемы\"</font></td></tr>");
             builder.append("</table></body>");
 
-            byte[] bytes = builder.toString().getBytes(Charsets.UTF_8);
+            byte[] bytes = builder.toString().getBytes();
             exchange.sendResponseHeaders(200, bytes.length);
 
             OutputStream os = exchange.getResponseBody();

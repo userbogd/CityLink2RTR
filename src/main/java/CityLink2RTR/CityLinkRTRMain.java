@@ -32,16 +32,20 @@ class SendUDPClientRoutine extends TimerTask
     public void run()
       {
         byte[] sendArr;
-        sendArr = new byte[UDP_PACKET_MAX_SIZE];
-        for (int i = 0; i < MainEventBufer.getSize() && i < MAX_EVENTS_INPACKET; ++i)
+        int readyEvents = (MainEventBufer.getSize() > MAX_EVENTS_INPACKET) ? MAX_EVENTS_INPACKET
+            : MainEventBufer.getSize();
+        sendArr = new byte[readyEvents*EVENT_LENTH];
+        for (int i = 0; i < readyEvents; ++i)
           {
-            System.arraycopy(MainEventBufer.PollEvent().rawByteArray, 0, sendArr, EVENT_LENTH * i,
-                EVENT_LENTH);
+            System.arraycopy(MainEventBufer.PollEvent().rawByteArray, 0, sendArr, EVENT_LENTH * i, EVENT_LENTH);
             CityLinkRTRMain.Stat.IncrTransmittedPacketsUDP(1);
           }
-        for (int i = 0; i < CityLinkRTRMain.udpPool.size(); ++i)
+        if (readyEvents > 0)
           {
-            CityLinkRTRMain.udpPool.get(i).sendUDPClient(sendArr);
+            for (int i = 0; i < CityLinkRTRMain.udpPool.size(); ++i)
+              {
+                CityLinkRTRMain.udpPool.get(i).sendUDPClient(sendArr);
+              }
           }
       }
   }
@@ -69,12 +73,11 @@ public class CityLinkRTRMain
       {
         System.out.println("Start retranslator");
         StartDate = new Date(); // fix start date
-        
+
         MB = new MainEventBufer();
         serialPool = new ArrayList<>();
         udpPool = new ArrayList<>();
         Stat = new Statistics();
-        
 
         Timer udpClientSendTimer = new Timer();
         TimerTask udpClientSendTimerTask = new SendUDPClientRoutine();
@@ -133,33 +136,31 @@ public class CityLinkRTRMain
 
         if (ini.get("UDPSERVER", "enabled", int.class) > 0)
           {
-            UDPServ = new ThreadedUDPServer(ini.get("UDPSERVER", "port", int.class));
+            // UDPServ = new ThreadedUDPServer(ini.get("UDPSERVER", "port", int.class));
+            UDPServ = new ThreadedUDPServer(60500);
             UDPServ.receive(new PacketHandler()
               {
                 @Override
                 public void process(Packet packet)
                   {
-                    String data = new String(packet.getData());
-                    if (data.length() >= 13)
+                    byte[] dt = new byte[1300];
+                    dt = packet.getData();
+                    for (int k = 0; k < 1300; k += 13)
                       {
-                        byte[] byteArray;
-                        byteArray = data.getBytes(Charset.forName("Windows-1251"));
-                        for (int k = 0; k < 1300; k += 13)
+                        if (dt[k] != 0)
                           {
-                            if (byteArray[k] != 0)
+                            CityLinkEventPacket pt = new CityLinkEventPacket();
+                            System.arraycopy(dt, k, pt.rawByteArray, 0, 13);
+                            int u[] = new int[13];
+                            Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, u);
+                            if (Helpers.CheckCityLinkEventError(u) == 0)
                               {
-                                CityLinkEventPacket pt = new CityLinkEventPacket();
-                                System.arraycopy(byteArray, k, pt.rawByteArray, 0, 13);
-                                int u[] = new int[13];
-                                Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, u);
-                                if (Helpers.CheckCityLinkEventError(u) == 0)
-                                  {
-                                    MainEventBufer.PutEvent(pt);
-                                    Stat.IncrReceivedPacketsUDP(1);
-                                  } else
-                                  {
-                                    Stat.IncrErrorPacketsUDP(1);
-                                  }
+                                MainEventBufer.PutEvent(pt);
+                                Stat.IncrReceivedPacketsUDP(1);
+                                //System.out.println(Helpers.bytesToHex(pt.rawByteArray));
+                              } else
+                              {
+                                Stat.IncrErrorPacketsUDP(1);
                               }
                           }
                       }
@@ -168,8 +169,8 @@ public class CityLinkRTRMain
           }
 
         if (ini.get("HTTP", "enabled", int.class) > 0)
-          HTTP = new MonitorHTTPServer(ini.get("HTTP", "port", int.class));
-
+          // HTTP = new MonitorHTTPServer(ini.get("HTTP", "port", int.class));
+          HTTP = new MonitorHTTPServer(8181);
         // Read all SERIAL sections and start threads
         Section sec = ini.get("SERIAL");
         System.out.format("Found and intialize %d serial ports\r\n", sec.length("enabled"));
