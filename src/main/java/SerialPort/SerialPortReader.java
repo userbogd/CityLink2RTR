@@ -6,6 +6,7 @@ import com.fazecast.jSerialComm.SerialPortInvalidPortException;
 
 import CityLink2RTR.CityLinkEventPacket;
 import CityLink2RTR.CityLinkRTRMain;
+import CityLink2RTR.MainEventBufer;
 
 public class SerialPortReader implements Runnable
   {
@@ -52,7 +53,7 @@ public class SerialPortReader implements Runnable
                 String s = new String(readBuffer, StandardCharsets.UTF_8);
                 System.out.println(s);
                 CityLinkEventPacket pkt = new CityLinkEventPacket();
-                CityLinkRTRMain.PutEventToMainBuffer(pkt);
+                MainEventBufer.PutEvent(pkt);
               }
           } catch (Exception e)
           {

@@ -78,8 +78,7 @@ public class MonitorHTTPServer
             long s = ((delta % 86400) % 3600) % 60;
             String dur = String.format("%dд %d:%02d:%02d", d, h, m, s);
             builder.append("Время непрерывной работы: <font color=#006699><b>" + dur + "</font></b><br><br>");
-            builder.append("Принято&nbsp;&nbsp;событий:  <font color=#006699><b>'" + "100" + "'</font></b><br>");
-            builder.append("Передано событий: <font color=#006699><b>'" + "100" + "'</font></b><br><br>");
+            
             builder.append("<b>ПРИНИМАЕМ ДАННЫЕ ИЗ:</b><br>");
             for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
               {
@@ -93,8 +92,8 @@ public class MonitorHTTPServer
             if (CityLinkRTRMain.ini.get("UDPSERVER", "enabled", int.class) >= 1)
               {
                 builder.append("Сетевой протокол UDP: <font color=#006699><b>[Порт:"+
-              CityLinkRTRMain.ini.get("UDPSERVER", "port", int.class)+";  Ошибок:"+
-              ""+"]</b></font>");
+              CityLinkRTRMain.ini.get("UDPSERVER", "port", int.class)+";  Принято событий:"+CityLinkRTRMain.Stat.getReceivedPacketsUDP()+
+              ";  Ошибок:"+CityLinkRTRMain.Stat.getErrorPacketsUDP()+"]</b></font>");
               }
 
             builder.append("<br><br>");
@@ -105,6 +104,7 @@ public class MonitorHTTPServer
                     + CityLinkRTRMain.udpPool.get(i).URL + ":" + CityLinkRTRMain.udpPool.get(i).Port
                     + "]</b></font><br>");
               }
+            builder.append("Передано событий: <font color=#006699><b>'" + CityLinkRTRMain.Stat.getTransmittedPacketsUDP() + "'</font></b><br><br>");
       
             builder.append("<br><br></tr>");
             builder.append(
