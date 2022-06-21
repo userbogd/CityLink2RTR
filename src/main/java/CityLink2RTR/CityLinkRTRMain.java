@@ -2,6 +2,7 @@ package CityLink2RTR;
 
 import java.io.File;
 import java.io.IOException;
+
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
@@ -22,6 +23,7 @@ import UDPConnections.ThreadedUDPServer;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.jar.Manifest;
 
 class SendUDPClientRoutine extends TimerTask
   {
@@ -34,7 +36,7 @@ class SendUDPClientRoutine extends TimerTask
         byte[] sendArr;
         int readyEvents = (MainEventBufer.getSize() > MAX_EVENTS_INPACKET) ? MAX_EVENTS_INPACKET
             : MainEventBufer.getSize();
-        sendArr = new byte[readyEvents*EVENT_LENTH];
+        sendArr = new byte[readyEvents * EVENT_LENTH];
         for (int i = 0; i < readyEvents; ++i)
           {
             System.arraycopy(MainEventBufer.PollEvent().rawByteArray, 0, sendArr, EVENT_LENTH * i, EVENT_LENTH);
@@ -44,7 +46,8 @@ class SendUDPClientRoutine extends TimerTask
           {
             for (int i = 0; i < CityLinkRTRMain.udpPool.size(); ++i)
               {
-                CityLinkRTRMain.udpPool.get(i).sendUDPClient(sendArr);
+                if (CityLinkRTRMain.udpPool.get(i).isEnabled > 0)
+                  CityLinkRTRMain.udpPool.get(i).sendUDPClient(sendArr);
               }
           }
       }
@@ -63,6 +66,7 @@ public class CityLinkRTRMain
     public static List<ClientUDPInstance> udpPool;
     public static Statistics Stat;
     public static MainEventBufer MB;
+    public String version;
 
     public CityLinkRTRMain()
       {
@@ -72,6 +76,7 @@ public class CityLinkRTRMain
     public static void main(String[] args)
       {
         System.out.println("Start retranslator");
+        System.out.println("Charset is:" + Charset.defaultCharset().name());
         StartDate = new Date(); // fix start date
 
         MB = new MainEventBufer();
@@ -136,8 +141,7 @@ public class CityLinkRTRMain
 
         if (ini.get("UDPSERVER", "enabled", int.class) > 0)
           {
-            // UDPServ = new ThreadedUDPServer(ini.get("UDPSERVER", "port", int.class));
-            UDPServ = new ThreadedUDPServer(60500);
+            UDPServ = new ThreadedUDPServer(ini.get("UDPSERVER", "udpport", int.class));
             UDPServ.receive(new PacketHandler()
               {
                 @Override
@@ -157,7 +161,7 @@ public class CityLinkRTRMain
                               {
                                 MainEventBufer.PutEvent(pt);
                                 Stat.IncrReceivedPacketsUDP(1);
-                                //System.out.println(Helpers.bytesToHex(pt.rawByteArray));
+                                // System.out.println(Helpers.bytesToHex(pt.rawByteArray));
                               } else
                               {
                                 Stat.IncrErrorPacketsUDP(1);
@@ -169,8 +173,11 @@ public class CityLinkRTRMain
           }
 
         if (ini.get("HTTP", "enabled", int.class) > 0)
-          // HTTP = new MonitorHTTPServer(ini.get("HTTP", "port", int.class));
-          HTTP = new MonitorHTTPServer(8181);
+          {
+            int port = ini.get("HTTP", "httpport", int.class);
+            HTTP = new MonitorHTTPServer(port);
+          }
+
         // Read all SERIAL sections and start threads
         Section sec = ini.get("SERIAL");
         System.out.format("Found and intialize %d serial ports\r\n", sec.length("enabled"));
@@ -179,7 +186,8 @@ public class CityLinkRTRMain
             SerialPortInstance sPort = new SerialPortInstance(Integer.parseInt(sec.get("enabled", i)),
                 sec.get("name", i), Integer.parseInt(sec.get("baudrate", i)));
             serialPool.add(sPort);
-            sPort.startSerialReader();
+            if (sPort.isEnabled > 0)
+              sPort.startSerialReader();
           }
 
         // Read all UDPCLIENT sections and start threads
@@ -190,7 +198,8 @@ public class CityLinkRTRMain
             ClientUDPInstance udpClient = new ClientUDPInstance(Integer.parseInt(sec.get("enabled", i)),
                 sec.get("name", i), sec.get("url", i), Integer.parseInt(sec.get("port", i)));
             udpPool.add(udpClient);
-            udpClient.startUDPClient();
+            if (udpClient.isEnabled > 0)
+              udpClient.startUDPClient();
           }
         udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
         System.out.println("Retranslator initialise complete");
