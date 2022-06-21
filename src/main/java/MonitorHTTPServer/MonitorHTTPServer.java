@@ -108,7 +108,7 @@ public class MonitorHTTPServer
                     String pName = CityLinkRTRMain.serialPool.get(i).name;
                     String pState = CityLinkRTRMain.serialPool.get(i).State;
                     String pOk = String.valueOf(CityLinkRTRMain.serialPool.get(i).PacketsOk);
-                    String pErr = String.valueOf(CityLinkRTRMain.serialPool.get(i).PacketsOk);
+                    String pErr = String.valueOf(CityLinkRTRMain.serialPool.get(i).PacketsErrors);
 
                     builder.append("Serial port <font color=#006699><b>");
                     builder.append(pName);
