@@ -31,16 +31,37 @@ public class SerialPortReader implements Runnable
     public SerialPortReader(String Port, int Baudrate, SerialPortInstance sPort)
       {
         sPortInst = sPort;
-        comPort = SerialPort.getCommPort(Port);
-        comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
-        comPort.setBaudRate(Baudrate);
         try
           {
+            comPort = SerialPort.getCommPort(Port);
+            comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
+            comPort.setBaudRate(Baudrate);
             comPort.openPort();
           } catch (Exception e)
           {
             e.printStackTrace();
+            System.out.print(e.getMessage());
           }
+        
+        
+        Runtime.getRuntime().addShutdownHook(new Thread()
+          {
+            public void run()
+              {
+                try
+                  {
+                    Thread.sleep(200);
+                    System.out.println("Shutting down thread" + comPort.getPortDescription());
+                    // some cleaning up code...
+
+                  } catch (InterruptedException e)
+                  {
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
+                  }
+              }
+          });
+        
       }
 
     @Override
@@ -62,22 +83,6 @@ public class SerialPortReader implements Runnable
           {
             while (true)
               {
-                /*
-                 * while (comPort.bytesAvailable() < EVENT_LENTH || comPort.bytesAvailable() %
-                 * EVENT_LENTH != 0) Thread.sleep(20); byte[] dt = new
-                 * byte[comPort.bytesAvailable()]; comPort.readBytes(dt, dt.length); for (int k
-                 * = 0; k < dt.length; k += EVENT_LENTH) { CityLinkEventPacket pt = new
-                 * CityLinkEventPacket(); System.arraycopy(dt, k, pt.rawByteArray, 0,
-                 * EVENT_LENTH);
-                 * 
-                 * int u[] = new int[EVENT_LENTH];
-                 * Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, u); if
-                 * (Helpers.CheckCityLinkEventError(u) == 0) { MainEventBufer.PutEvent(pt);
-                 * ++sPortInst.PacketsOk; System.out.print(Helpers.bytesToHex(pt.rawByteArray) +
-                 * "\r\n"); } else { ++sPortInst.PacketsErrors; }
-                 * 
-                 * }
-                 */
                 while (comPort.bytesAvailable() < EVENT_LENTH)
                   Thread.sleep(20);
                 while (ReadyBytes != comPort.bytesAvailable())
@@ -100,18 +105,18 @@ public class SerialPortReader implements Runnable
                           {
                             MainEventBufer.PutEvent(pt);
                             ++sPortInst.PacketsOk;
-                            System.out.print(Helpers.bytesToHex(pt.rawByteArray)+"\r\n");
+                            System.out.print(Helpers.bytesToHex(pt.rawByteArray) + "\r\n");
                           }
                         else
                           {
                             ++sPortInst.PacketsErrors;
                           }
-
                         ptr += EVENT_LENTH;
                       }
                     else
                       ++ptr;
                   }
+                
               }
           } catch (Exception e)
           {

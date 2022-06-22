@@ -16,6 +16,7 @@ import org.ini4j.Profile.Section;
 
 import MonitorHTTPServer.*;
 import SerialPort.SerialPortInstance;
+import SerialPort.SerialPortReader2;
 import UDPConnections.ClientUDPInstance;
 import UDPConnections.Packet;
 import UDPConnections.PacketHandler;
@@ -177,9 +178,24 @@ public class CityLinkRTRMain
             int port = ini.get("HTTP", "httpport", int.class);
             HTTP = new MonitorHTTPServer(port);
           }
+        
+        
+        /*
+        try
+          {
+              SerialPortReader2.listPorts();
+          }
+          catch ( Exception e )
+          {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+          }
 
+       */
+        
         // Read all SERIAL sections and start threads
         Section sec = ini.get("SERIAL");
+         
         System.out.format("Found and intialize %d serial ports\r\n", sec.length("enabled"));
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
@@ -203,6 +219,23 @@ public class CityLinkRTRMain
           }
         udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
         System.out.println("Retranslator initialise complete");
+      
+        
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+          public void run() {
+              try {
+                  Thread.sleep(200);
+                  System.out.println("Shutting down retranslator main thread");
+                  //some cleaning up code...
+
+              } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  e.printStackTrace();
+              }
+          }
+      });
+      
+      
       }
 
   }
