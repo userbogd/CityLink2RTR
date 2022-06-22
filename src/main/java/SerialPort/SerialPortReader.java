@@ -26,6 +26,7 @@ public class SerialPortReader implements Runnable
     public static final int EVENT_LENTH = 13;
     SerialPort comPort;
     SerialPortInstance sPortInst;
+    int ReadyBytes;
 
     public SerialPortReader(String Port, int Baudrate, SerialPortInstance sPort)
       {
@@ -50,7 +51,8 @@ public class SerialPortReader implements Runnable
           {
             System.out.format("Serial port %s OK\r\n", comPort.getSystemPortName());
             sPortInst.State = "OK";
-          } else
+          }
+        else
           {
             System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
             sPortInst.State = "ERROR";
@@ -60,27 +62,55 @@ public class SerialPortReader implements Runnable
           {
             while (true)
               {
-                while (comPort.bytesAvailable() < EVENT_LENTH || comPort.bytesAvailable() % EVENT_LENTH != 0)
+                /*
+                 * while (comPort.bytesAvailable() < EVENT_LENTH || comPort.bytesAvailable() %
+                 * EVENT_LENTH != 0) Thread.sleep(20); byte[] dt = new
+                 * byte[comPort.bytesAvailable()]; comPort.readBytes(dt, dt.length); for (int k
+                 * = 0; k < dt.length; k += EVENT_LENTH) { CityLinkEventPacket pt = new
+                 * CityLinkEventPacket(); System.arraycopy(dt, k, pt.rawByteArray, 0,
+                 * EVENT_LENTH);
+                 * 
+                 * int u[] = new int[EVENT_LENTH];
+                 * Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, u); if
+                 * (Helpers.CheckCityLinkEventError(u) == 0) { MainEventBufer.PutEvent(pt);
+                 * ++sPortInst.PacketsOk; System.out.print(Helpers.bytesToHex(pt.rawByteArray) +
+                 * "\r\n"); } else { ++sPortInst.PacketsErrors; }
+                 * 
+                 * }
+                 */
+                while (comPort.bytesAvailable() < EVENT_LENTH)
                   Thread.sleep(20);
-                byte[] dt = new byte[comPort.bytesAvailable()];
-                comPort.readBytes(dt, dt.length);
-                for (int k = 0; k < dt.length; k += EVENT_LENTH)
+                while (ReadyBytes != comPort.bytesAvailable())
                   {
-                    CityLinkEventPacket pt = new CityLinkEventPacket();
-                    System.arraycopy(dt, k, pt.rawByteArray, 0, EVENT_LENTH);
-                    
-                    int u[] = new int[EVENT_LENTH];
-                    Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, u);
-                    if (Helpers.CheckCityLinkEventError(u) == 0)
+                    Thread.sleep(10);
+                    ReadyBytes = comPort.bytesAvailable();
+                  }
+                byte[] arr1 = new byte[comPort.bytesAvailable()];
+                comPort.readBytes(arr1, arr1.length);
+                int ptr = 0;
+                while (ptr <= (arr1.length - EVENT_LENTH))
+                  {
+                    if (arr1[ptr] == 0x34 && arr1[ptr + 10] == 0x0D)
                       {
-                        MainEventBufer.PutEvent(pt);                        
-                        ++sPortInst.PacketsOk;
-                        System.out.print(Helpers.bytesToHex(pt.rawByteArray)+"\r\n");
-                      } else
-                      {
-                        ++sPortInst.PacketsErrors;
-                      }
+                        CityLinkEventPacket pt = new CityLinkEventPacket();
+                        System.arraycopy(arr1, ptr, pt.rawByteArray, 0, EVENT_LENTH);
+                        int tmp[] = new int[EVENT_LENTH];
+                        Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, tmp);
+                        if (Helpers.CheckCityLinkEventError(tmp) == 0)
+                          {
+                            MainEventBufer.PutEvent(pt);
+                            ++sPortInst.PacketsOk;
+                            System.out.print(Helpers.bytesToHex(pt.rawByteArray)+"\r\n");
+                          }
+                        else
+                          {
+                            ++sPortInst.PacketsErrors;
+                          }
 
+                        ptr += EVENT_LENTH;
+                      }
+                    else
+                      ++ptr;
                   }
               }
           } catch (Exception e)
