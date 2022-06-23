@@ -51,9 +51,9 @@ public class SerialPortReader implements Runnable
                 try
                   {
                     Thread.sleep(200);
-                    System.out.println("Shutting down thread" + comPort.getPortDescription());
+                    comPort.closePort();
+                    System.out.println("Shutting down thread:" + comPort.getPortDescription());
                     // some cleaning up code...
-
                   } catch (InterruptedException e)
                   {
                     Thread.currentThread().interrupt();
@@ -70,7 +70,7 @@ public class SerialPortReader implements Runnable
 
         if (comPort.isOpen())
           {
-            System.out.format("Serial port %s OK\r\n", comPort.getSystemPortName());
+            System.out.format("Serial port %s opened OK\r\n", comPort.getPortDescription());
             sPortInst.State = "OK";
           }
         else
@@ -92,6 +92,7 @@ public class SerialPortReader implements Runnable
                   }
                 byte[] arr1 = new byte[comPort.bytesAvailable()];
                 comPort.readBytes(arr1, arr1.length);
+                //System.out.print(Helpers.bytesToHex(arr1) + "\r\n");  //raw data received
                 int ptr = 0;
                 while (ptr <= (arr1.length - EVENT_LENTH))
                   {

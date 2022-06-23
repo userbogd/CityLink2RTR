@@ -16,7 +16,6 @@ import org.ini4j.Profile.Section;
 
 import MonitorHTTPServer.*;
 import SerialPort.SerialPortInstance;
-import SerialPort.SerialPortReader2;
 import UDPConnections.ClientUDPInstance;
 import UDPConnections.Packet;
 import UDPConnections.PacketHandler;
@@ -178,20 +177,6 @@ public class CityLinkRTRMain
             int port = ini.get("HTTP", "httpport", int.class);
             HTTP = new MonitorHTTPServer(port);
           }
-        
-        
-        /*
-        try
-          {
-              SerialPortReader2.listPorts();
-          }
-          catch ( Exception e )
-          {
-              // TODO Auto-generated catch block
-              e.printStackTrace();
-          }
-
-       */
         
         // Read all SERIAL sections and start threads
         Section sec = ini.get("SERIAL");
