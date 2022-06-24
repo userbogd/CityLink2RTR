@@ -2,8 +2,9 @@ package UDPConnections;
 
 import java.net.DatagramPacket;
 
-public abstract class PacketHandler {
+public abstract class PacketHandler
+  {
 
-	public abstract void process(Packet packet);
+    public abstract void process(Packet packet);
 
-}
+  }

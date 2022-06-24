@@ -2,13 +2,11 @@ package UDPConnections;
 
 public class ClientUDPInstance
   {
-    public int isEnabled;
-    public String name;
-    public String URL;
-    public int Port;
-    public boolean isDataPresent;
-    public int PacketErrors;
-    public ThreadedUDPClient cl;
+    private int isEnabled;
+    private String name, URL;
+    private int Port;
+    private long PacketsOk, PacketsErrors;
+    private ThreadedUDPClient cl;
 
     public ClientUDPInstance(int isEnabled, String name, String uRL, int port)
       {
@@ -27,4 +25,76 @@ public class ClientUDPInstance
       {
         this.cl.send(data);
       }
+
+    public synchronized void incPacketsOK()
+      {
+        ++this.PacketsOk;
+      }
+   
+    public synchronized void incPacketsError()
+      {
+        ++this.PacketsErrors;
+      } 
+    
+    public synchronized int getIsEnabled()
+      {
+        return isEnabled;
+      }
+
+    public synchronized void setIsEnabled(int isEnabled)
+      {
+        this.isEnabled = isEnabled;
+      }
+
+    public synchronized String getName()
+      {
+        return name;
+      }
+
+    public synchronized void setName(String name)
+      {
+        this.name = name;
+      }
+
+    public synchronized String getURL()
+      {
+        return URL;
+      }
+
+    public synchronized void setURL(String uRL)
+      {
+        URL = uRL;
+      }
+
+    public synchronized int getPort()
+      {
+        return Port;
+      }
+
+    public synchronized void setPort(int port)
+      {
+        Port = port;
+      }
+
+    public synchronized long getPacketsOk()
+      {
+        return PacketsOk;
+      }
+
+    public synchronized void setPacketsOk(long packetsOk)
+      {
+        PacketsOk = packetsOk;
+      }
+
+    public synchronized long getPacketsErrors()
+      {
+        return PacketsErrors;
+      }
+
+    public synchronized void setPacketsErrors(long packetsErrors)
+      {
+        PacketsErrors = packetsErrors;
+      }
+  
+  
   }

@@ -87,6 +87,7 @@ public class ThreadedUDPClient implements Runnable {
 	@Override
 	public void run() {
 		running = true;
+		System.out.println("UDP client  started to URL " + connection.getAddress());
 	}
 
 }

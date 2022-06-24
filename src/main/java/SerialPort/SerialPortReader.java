@@ -1,84 +1,61 @@
 package SerialPort;
 
-import java.nio.charset.StandardCharsets;
 import com.fazecast.jSerialComm.SerialPort;
-import com.fazecast.jSerialComm.SerialPortInvalidPortException;
 
 import CityLink2RTR.CityLinkEventPacket;
-import CityLink2RTR.CityLinkRTRMain;
 import CityLink2RTR.Helpers;
 import CityLink2RTR.MainEventBufer;
-
-import java.util.Timer;
-import java.util.TimerTask;
-
-class RestartSerialAfterFail extends TimerTask
-  {
-    @Override
-    public void run()
-      {
-
-      }
-  }
 
 public class SerialPortReader implements Runnable
   {
     public static final int EVENT_LENTH = 13;
     SerialPort comPort;
+    String portName;
+    int portBaudrate;
     SerialPortInstance sPortInst;
     int ReadyBytes;
 
     public SerialPortReader(String Port, int Baudrate, SerialPortInstance sPort)
       {
+        portName = new String(Port);
+        portBaudrate = Baudrate;
         sPortInst = sPort;
-        try
-          {
-            comPort = SerialPort.getCommPort(Port);
-            comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
-            comPort.setBaudRate(Baudrate);
-            comPort.openPort();
-          } catch (Exception e)
-          {
-            e.printStackTrace();
-            System.out.print(e.getMessage());
-          }
-        
-        
         Runtime.getRuntime().addShutdownHook(new Thread()
           {
             public void run()
               {
                 try
                   {
-                    Thread.sleep(200);
-                    comPort.closePort();
+                   
                     System.out.println("Shutting down thread:" + comPort.getPortDescription());
-                    // some cleaning up code...
-                  } catch (InterruptedException e)
+                    comPort.closePort();
+                  } catch (Exception e)
                   {
-                    Thread.currentThread().interrupt();
+                   // Thread.currentThread().interrupt();
                     e.printStackTrace();
                   }
               }
           });
-        
       }
 
     @Override
     public void run()
       {
-
-        if (comPort.isOpen())
+        try
           {
-            System.out.format("Serial port %s opened OK\r\n", comPort.getPortDescription());
-            sPortInst.State = "OK";
-          }
-        else
+            comPort = SerialPort.getCommPort(portName);
+            comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
+            comPort.setBaudRate(portBaudrate);
+            comPort.openPort();
+          } catch (Exception e)
           {
             System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
-            sPortInst.State = "ERROR";
-            return;
+            e.printStackTrace();
+            sPortInst.setState("ERROR");
           }
+        System.out.format("Serial port %s opened OK\r\n", comPort.getPortDescription());
+        sPortInst.setState("OK");
+        
         try
           {
             while (true)
@@ -92,7 +69,6 @@ public class SerialPortReader implements Runnable
                   }
                 byte[] arr1 = new byte[comPort.bytesAvailable()];
                 comPort.readBytes(arr1, arr1.length);
-                //System.out.print(Helpers.bytesToHex(arr1) + "\r\n");  //raw data received
                 int ptr = 0;
                 while (ptr <= (arr1.length - EVENT_LENTH))
                   {
@@ -105,25 +81,24 @@ public class SerialPortReader implements Runnable
                         if (Helpers.CheckCityLinkEventError(tmp) == 0)
                           {
                             MainEventBufer.PutEvent(pt);
-                            ++sPortInst.PacketsOk;
+                            sPortInst.incPacketsOK();
                             System.out.print(Helpers.bytesToHex(pt.rawByteArray) + "\r\n");
                           }
                         else
                           {
-                            ++sPortInst.PacketsErrors;
+                            sPortInst.incPacketsError();
                           }
                         ptr += EVENT_LENTH;
                       }
                     else
                       ++ptr;
                   }
-                
               }
           } catch (Exception e)
           {
             System.out.println(e.getMessage());
           }
         comPort.closePort();
-
       }
+
   }

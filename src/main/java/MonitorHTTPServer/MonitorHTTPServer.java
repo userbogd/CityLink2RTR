@@ -22,7 +22,7 @@ public class MonitorHTTPServer
         try
           {
             server = HttpServer.create();
-            server.bind(new InetSocketAddress(8181), 0);
+            server.bind(new InetSocketAddress(port), 0);
             server.setExecutor(null);
             server.start();
             System.out.format("HTTP server started on port %d\r\n", port);
@@ -57,15 +57,28 @@ public class MonitorHTTPServer
                 String res = new String("reset_btn=Reset");
                 if (s.equals(res))
                   {
+                    for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
+                      {
+                        CityLinkRTRMain.serialPool.get(i).setPacketsOk(0);
+                        CityLinkRTRMain.serialPool.get(i).setPacketsErrors(0);
+                      }
 
-                    CityLinkRTRMain.Stat.setReceivedPacketsUDP(0);
-                    CityLinkRTRMain.Stat.setTransmittedPacketsUDP(0);
-                    CityLinkRTRMain.Stat.setErrorPacketsUDP(0);
+                    for (int i = 0; i < CityLinkRTRMain.udpServerPool.size(); ++i)
+                      {
+                        CityLinkRTRMain.udpServerPool.get(i).setPacketsOk(0);
+                        CityLinkRTRMain.udpServerPool.get(i).setPacketsErrors(0);
+                      }
+                    for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
+                      {
+                        CityLinkRTRMain.udpClientPool.get(i).setPacketsOk(0);
+                        CityLinkRTRMain.udpClientPool.get(i).setPacketsErrors(0);
+                      }
                   }
               }
 
-            String rtrName = CityLinkRTRMain.ini.get("RTR", "name");
+            String rtrName = CityLinkRTRMain.ini.get("RTR", "username");
             String rtrVer = CityLinkRTRMain.ini.get("RTR", "version");
+            String javaVersion = System.getProperty("java.version");
 
             builder.append("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\r\n");
             builder.append("<head><title>TRS RTR Ver_" + rtrVer + "</title>\r\n");
@@ -73,14 +86,15 @@ public class MonitorHTTPServer
             builder.append("<body>\r\n");
             builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>\r\n");
             builder.append(
-                "<tr><td align='left'><font size = '+2' face='Monospace' ><b>Software UDP retranslator 'CityLink'  Ver_"
-                    + rtrVer + "</b></font></td></tr>\r\n");
+                "<tr><td align='left'><font size = '+2' face='Monospace' ><b>Software serial to UDP retranslator 'CityLink'  JAVA edition</b></font></td></tr>\r\n");
             builder.append("</table>\r\n");
             builder
                 .append("<table align = 'center' width='800' border ='1' cellspacing='2' cellpadding='2'><tr><td>\r\n");
             builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>\r\n");
             builder.append("<tr><font size = '+1' face='Monospace' >\r\n");
             builder.append("Retranslator name: &nbsp; <font color=#006699><b>" + rtrName + "</font></b><br>\r\n");
+            builder.append("Software version: &nbsp; <font color=#006699><b>" + rtrVer + "</font></b><br>\r\n");
+            builder.append("JAVA SDK version: &nbsp; <font color=#006699><b>" + javaVersion + "</font></b><br>\r\n");
             SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
             Date date = new Date();
             builder.append("Current time: <font color=#006699><b>" + formatter.format(date) + "</font></b><br>\r\n");
@@ -100,45 +114,62 @@ public class MonitorHTTPServer
                     + CityLinkRTRMain.ini.get("HTTP", "httpport", int.class) + "</b></font><br><br>\r\n");
               }
 
-            builder.append("<b>Sources:</b><br>\r\n");
+            builder.append("<b>INPUT SERIAL:</b><br>\r\n");
             for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
               {
-                  if(CityLinkRTRMain.serialPool.get(i).isEnabled > 0)
+                if (CityLinkRTRMain.serialPool.get(i).getIsEnabled() > 0)
                   {
-                    String pName = CityLinkRTRMain.serialPool.get(i).name;
-                    String pState = CityLinkRTRMain.serialPool.get(i).State;
-                    String pOk = String.valueOf(CityLinkRTRMain.serialPool.get(i).PacketsOk);
-                    String pErr = String.valueOf(CityLinkRTRMain.serialPool.get(i).PacketsErrors);
+                    String pName = CityLinkRTRMain.serialPool.get(i).getName();
+                    String pState = CityLinkRTRMain.serialPool.get(i).getState();
+                    String pOk = String.valueOf(CityLinkRTRMain.serialPool.get(i).getPacketsOk());
+                    String pErr = String.valueOf(CityLinkRTRMain.serialPool.get(i).getPacketsErrors());
 
                     builder.append("Serial port <font color=#006699><b>");
                     builder.append(pName);
                     builder.append(" [State:" + pState + "; ");
-                    builder.append("Data:" + pOk + "; ");
+                    builder.append("Packets OK:" + pOk + "; ");
                     builder.append("Errors:" + pErr + "]</font></color></b><br>\r\n");
                   }
               }
 
-            if (CityLinkRTRMain.ini.get("UDPSERVER", "enabled", int.class) >= 1)
+            builder.append("<br>");
+            builder.append("<b>INPUT UDP:</b><br>\r\n");
+            for (int i = 0; i < CityLinkRTRMain.udpServerPool.size(); ++i)
               {
-                builder.append("Network protocol UDP: <font color=#006699><b>[Port:"
-                    + CityLinkRTRMain.ini.get("UDPSERVER", "udpport", int.class) + ";  Events received:"
-                    + CityLinkRTRMain.Stat.getReceivedPacketsUDP() + ";  Errors:"
-                    + CityLinkRTRMain.Stat.getErrorPacketsUDP() + "]</b></font>\r\n");
-              }
-
-            builder.append("<br><br>");
-            builder.append("<b>Destinations:</b><br>\r\n");
-            for (int i = 0; i < CityLinkRTRMain.udpPool.size(); ++i)
-              {
-                if (CityLinkRTRMain.udpPool.get(i).isEnabled > 0)
+                if (CityLinkRTRMain.udpServerPool.get(i).getIsEnabled() > 0)
                   {
-                    builder.append(CityLinkRTRMain.udpPool.get(i).name + " <font color=#006699><b>["
-                        + CityLinkRTRMain.udpPool.get(i).URL + ":" + CityLinkRTRMain.udpPool.get(i).Port
-                        + "]</b></font><br>\r\n");
+                    String pName = CityLinkRTRMain.udpServerPool.get(i).getName();
+                    String pPort = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPort());
+                    String pOk = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsOk());
+                    String pErr = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsErrors());
+                    builder.append("UDP receiver <font color=#006699><b>");
+                    builder.append(pName);
+                    builder.append(" [Port:" + pPort + "; ");
+                    builder.append("Packets OK:" + pOk + "; ");
+                    builder.append("Errors:" + pErr + "]</font></color></b><br>\r\n");
                   }
               }
-            builder.append("Events transmitted: <font color=#006699><b>"
-                + CityLinkRTRMain.Stat.getTransmittedPacketsUDP() + "</font></b><br><br>\r\n");
+
+            builder.append("<br>");
+            builder.append("<b>OUTPUT:</b><br>\r\n");
+            for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
+              {
+                if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
+                  {
+                    String pName = CityLinkRTRMain.udpClientPool.get(i).getName();
+                    String pURL = CityLinkRTRMain.udpClientPool.get(i).getURL();
+                    String pPort = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPort());
+                    String pOk = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPacketsOk());
+                    String pErr = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPacketsErrors());
+                    builder.append("UDP sender <font color=#006699><b>");
+                    builder.append(pName);
+                    builder.append(" [URL:" + pURL + "; ");
+                    builder.append("Port:" + pPort + "; ");
+                    builder.append("Packets OK:" + pOk + "; ");
+                    builder.append("Errors:" + pErr + "]</font></color></b><br>\r\n");
+                  }
+              }
+            builder.append("<br>");
             builder.append(
                 "<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>Refrash</button>\r\n");
             builder.append(
@@ -157,7 +188,6 @@ public class MonitorHTTPServer
             exchange.sendResponseHeaders(200, bytes.length);
 
             OutputStream os = exchange.getResponseBody();
-
             os.write(bytes);
             os.close();
           }
