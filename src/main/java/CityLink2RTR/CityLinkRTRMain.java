@@ -47,7 +47,8 @@ class SendUDPClientRoutine extends TimerTask
                 if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
                   {
                     CityLinkRTRMain.udpClientPool.get(i).sendUDPClient(sendArr);
-                    CityLinkRTRMain.udpClientPool.get(i).setPacketsOk(CityLinkRTRMain.udpClientPool.get(i).getPacketsOk()+readyEvents);
+                    CityLinkRTRMain.udpClientPool.get(i)
+                        .setPacketsOk(CityLinkRTRMain.udpClientPool.get(i).getPacketsOk() + readyEvents);
                   }
               }
           }
@@ -122,10 +123,12 @@ public class CityLinkRTRMain
                 ini.put("SERIAL", "baudrate", 19200);
 
                 ini.store();
-              } catch (InvalidFileFormatException e)
+              }
+            catch (InvalidFileFormatException e)
               {
                 e.printStackTrace();
-              } catch (IOException e)
+              }
+            catch (IOException e)
               {
                 e.printStackTrace();
               }
@@ -136,7 +139,8 @@ public class CityLinkRTRMain
             ini = new Ini(conf);
             ini.getConfig().setMultiSection(true);
             ini.getConfig().setMultiOption(true);
-          } catch (IOException e)
+          }
+        catch (IOException e)
           {
             e.printStackTrace();
             System.out.println("Default ini file creation ERROR");
@@ -155,9 +159,7 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             SerialPortInstance sPort = new SerialPortInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("username", i),
-                sec.get("name", i),
-                Integer.parseInt(sec.get("baudrate", i)));
+                sec.get("username", i), sec.get("name", i), Integer.parseInt(sec.get("baudrate", i)));
             serialPool.add(sPort);
             if (sPort.getIsEnabled() > 0)
               sPort.startSerialReader();
@@ -168,8 +170,7 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             ServerUDPInstance udpServer = new ServerUDPInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("username", i),
-                Integer.parseInt(sec.get("port", i)));
+                sec.get("username", i), Integer.parseInt(sec.get("port", i)));
             udpServerPool.add(udpServer);
             if (udpServer.getIsEnabled() > 0)
               udpServer.startUDPServer();
@@ -181,9 +182,7 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             ClientUDPInstance udpClient = new ClientUDPInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("username", i),
-                sec.get("url", i),
-                Integer.parseInt(sec.get("port", i)));
+                sec.get("username", i), sec.get("url", i), Integer.parseInt(sec.get("port", i)));
             udpClientPool.add(udpClient);
             if (udpClient.getIsEnabled() > 0)
               udpClient.startUDPClient();
@@ -200,8 +199,14 @@ public class CityLinkRTRMain
                     Thread.sleep(200);
                     System.out.println("Shutting down retranslator main thread");
                     // some cleaning up code...
+                    for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
+                      {
+                        if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
+                          CityLinkRTRMain.udpClientPool.get(i).closeUDPClient();
+                      }
 
-                  } catch (InterruptedException e)
+                  }
+                catch (InterruptedException e)
                   {
                     Thread.currentThread().interrupt();
                     e.printStackTrace();

@@ -25,6 +25,11 @@ public class ClientUDPInstance
       {
         this.cl.send(data);
       }
+    
+    public void closeUDPClient()
+      {
+        this.cl.close();;
+      }
 
     public synchronized void incPacketsOK()
       {

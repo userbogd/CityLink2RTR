@@ -126,9 +126,12 @@ public class MonitorHTTPServer
 
                     builder.append("Serial port <font color=#006699><b>");
                     builder.append(pName);
-                    builder.append(" [State:" + pState + "; ");
-                    builder.append("Packets OK:" + pOk + "; ");
-                    builder.append("Errors:" + pErr + "]</font></color></b><br>\r\n");
+                    if(pState.equals("OK"))
+                      builder.append(" [State:<font color=#009900>" + pState + "</font>; ");
+                    else
+                      builder.append(" [State:<font color=#ff0000>" + pState + "</font>; ");
+                    builder.append("Packets OK:<font color=#009900>" + pOk + "</font>; ");
+                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</font></color></b><br>\r\n");
                   }
               }
 
@@ -145,8 +148,8 @@ public class MonitorHTTPServer
                     builder.append("UDP receiver <font color=#006699><b>");
                     builder.append(pName);
                     builder.append(" [Port:" + pPort + "; ");
-                    builder.append("Packets OK:" + pOk + "; ");
-                    builder.append("Errors:" + pErr + "]</font></color></b><br>\r\n");
+                    builder.append("Packets OK:<font color=#009900>" + pOk + "</font>; ");
+                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</font></color></b><br>\r\n");
                   }
               }
 
@@ -165,8 +168,8 @@ public class MonitorHTTPServer
                     builder.append(pName);
                     builder.append(" [URL:" + pURL + "; ");
                     builder.append("Port:" + pPort + "; ");
-                    builder.append("Packets OK:" + pOk + "; ");
-                    builder.append("Errors:" + pErr + "]</font></color></b><br>\r\n");
+                    builder.append("Packets OK:<font color=#009900>" + pOk + "</font>; ");
+                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</font></color></b><br>\r\n");
                   }
               }
             builder.append("<br>");

@@ -26,12 +26,11 @@ public class SerialPortReader implements Runnable
               {
                 try
                   {
-                   
-                    System.out.println("Shutting down thread:" + comPort.getPortDescription());
+                    System.out.println("Shutting down thread:" + comPort.getSystemPortName());
                     comPort.closePort();
-                  } catch (Exception e)
+                  }
+                catch (Exception e)
                   {
-                   // Thread.currentThread().interrupt();
                     e.printStackTrace();
                   }
               }
@@ -41,64 +40,95 @@ public class SerialPortReader implements Runnable
     @Override
     public void run()
       {
-        try
+        while (true)
           {
-            comPort = SerialPort.getCommPort(portName);
-            comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
-            comPort.setBaudRate(portBaudrate);
-            comPort.openPort();
-          } catch (Exception e)
-          {
-            System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
-            e.printStackTrace();
-            sPortInst.setState("ERROR");
-          }
-        System.out.format("Serial port %s opened OK\r\n", comPort.getPortDescription());
-        sPortInst.setState("OK");
-        
-        try
-          {
-            while (true)
+            try
               {
-                while (comPort.bytesAvailable() < EVENT_LENTH)
-                  Thread.sleep(20);
-                while (ReadyBytes != comPort.bytesAvailable())
+                comPort = SerialPort.getCommPort(portName);
+                comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
+                comPort.setBaudRate(portBaudrate);
+                comPort.openPort();
+              }
+            catch (Exception e)
+              {
+                System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
+                e.printStackTrace();
+                sPortInst.setState("ERROR");
+              }
+
+            if (comPort.isOpen())
+              {
+                System.out.format("Serial port %s opened OK\r\n", comPort.getPortDescription());
+                sPortInst.setState("OK");
+                try
                   {
-                    Thread.sleep(10);
-                    ReadyBytes = comPort.bytesAvailable();
-                  }
-                byte[] arr1 = new byte[comPort.bytesAvailable()];
-                comPort.readBytes(arr1, arr1.length);
-                int ptr = 0;
-                while (ptr <= (arr1.length - EVENT_LENTH))
-                  {
-                    if (arr1[ptr] == 0x34 && arr1[ptr + 10] == 0x0D)
+                    while (true)
                       {
-                        CityLinkEventPacket pt = new CityLinkEventPacket();
-                        System.arraycopy(arr1, ptr, pt.rawByteArray, 0, EVENT_LENTH);
-                        int tmp[] = new int[EVENT_LENTH];
-                        Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, tmp);
-                        if (Helpers.CheckCityLinkEventError(tmp) == 0)
+                        while (comPort.bytesAvailable() < EVENT_LENTH)
+                          Thread.sleep(20);
+                        while (ReadyBytes != comPort.bytesAvailable())
                           {
-                            MainEventBufer.PutEvent(pt);
-                            sPortInst.incPacketsOK();
-                            System.out.print(Helpers.bytesToHex(pt.rawByteArray) + "\r\n");
+                            Thread.sleep(10);
+                            ReadyBytes = comPort.bytesAvailable();
                           }
-                        else
+                        byte[] arr1 = new byte[comPort.bytesAvailable()];
+                        comPort.readBytes(arr1, arr1.length);
+                        int ptr = 0;
+                        while (ptr <= (arr1.length - EVENT_LENTH))
                           {
-                            sPortInst.incPacketsError();
+                            if (arr1[ptr] == 0x34 && arr1[ptr + 10] == 0x0D)
+                              {
+                                CityLinkEventPacket pt = new CityLinkEventPacket();
+                                System.arraycopy(arr1, ptr, pt.rawByteArray, 0, EVENT_LENTH);
+                                int tmp[] = new int[EVENT_LENTH];
+                                Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, tmp);
+                                if (Helpers.CheckCityLinkEventError(tmp) == 0)
+                                  {
+                                    MainEventBufer.PutEvent(pt);
+                                    sPortInst.incPacketsOK();
+                                    System.out.print(Helpers.bytesToHex(pt.rawByteArray) + "\r\n");
+                                  }
+                                else
+                                  {
+                                    sPortInst.incPacketsError();
+                                  }
+                                ptr += EVENT_LENTH;
+                              }
+                            else
+                              ++ptr;
                           }
-                        ptr += EVENT_LENTH;
                       }
-                    else
-                      ++ptr;
+                  }
+                catch (Exception e)
+                  {
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
+                  }
+                System.out.format("Serial port %s ERROR\r\n", comPort.getSystemPortName());
+                try
+                  {
+                    comPort.closePort();
+                    sPortInst.setState("ERROR");
+                    Thread.sleep(10000);
+                  }
+                catch (InterruptedException e)
+                  {
+                    e.printStackTrace();
                   }
               }
-          } catch (Exception e)
-          {
-            System.out.println(e.getMessage());
+            else
+              {
+                System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
+                sPortInst.setState("ERROR");
+                try
+                  {
+                    Thread.sleep(10000);
+                  }
+                catch (InterruptedException e)
+                  {
+                    e.printStackTrace();
+                  }
+              }
           }
-        comPort.closePort();
       }
-
   }
