@@ -2,13 +2,11 @@ package CityLink2RTR;
 
 import java.io.File;
 import java.io.IOException;
-
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import java.util.logging.Logger;
 
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
@@ -19,6 +17,10 @@ import SerialPort.SerialPortInstance;
 import UDPConnections.ClientUDPInstance;
 import UDPConnections.ServerUDPInstance;
 import UDPConnections.ThreadedUDPServer;
+
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -63,13 +65,23 @@ public class CityLinkRTRMain
     public static Ini ini;
     public static final String LOG_FILE_NAME = "rtr.%u.log";
     public static Date StartDate;
-    private static Logger log = Logger.getLogger(CityLinkRTRMain.class.getName());
     public static List<SerialPortInstance> serialPool;
     public static List<ClientUDPInstance> udpClientPool;
     public static List<ServerUDPInstance> udpServerPool;
-
     public static MainEventBufer MB;
     public String version;
+    static {
+      // must set before the Logger
+      // loads logging.properties from the classpath
+      try (InputStream is = CityLinkRTRMain.class.getClassLoader().
+              getResourceAsStream("logging.properties")) {
+          LogManager.getLogManager().readConfiguration(is);
+      } catch (IOException e) {
+          e.printStackTrace();
+      }
+  }
+    public static final Logger LOG = Logger.getLogger(
+        CityLinkRTRMain.class.getName());
 
     public CityLinkRTRMain()
       {
@@ -78,6 +90,8 @@ public class CityLinkRTRMain
 
     public static void main(String[] args)
       {
+        //LogManager().readConfiguration(CityLinkRTRMain.class.getResourceAsStream("logging.properties"));
+        LOG.info("Start retranlator");
         System.out.println("Start retranslator");
         System.out.println("Charset is:" + Charset.defaultCharset().name());
         StartDate = new Date(); // fix start date

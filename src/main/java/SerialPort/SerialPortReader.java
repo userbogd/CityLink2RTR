@@ -1,8 +1,11 @@
 package SerialPort;
 
+import org.apache.commons.math3.analysis.function.Log;
+
 import com.fazecast.jSerialComm.SerialPort;
 
 import CityLink2RTR.CityLinkEventPacket;
+import CityLink2RTR.CityLinkRTRMain;
 import CityLink2RTR.Helpers;
 import CityLink2RTR.MainEventBufer;
 
@@ -52,6 +55,8 @@ public class SerialPortReader implements Runnable
             catch (Exception e)
               {
                 System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
+                CityLinkRTRMain.LOG.severe(String.format("Can't open serial port %s", comPort.getSystemPortName()));
+                
                 e.printStackTrace();
                 sPortInst.setState("ERROR");
               }
@@ -105,6 +110,7 @@ public class SerialPortReader implements Runnable
                     e.printStackTrace();
                   }
                 System.out.format("Serial port %s ERROR\r\n", comPort.getSystemPortName());
+                CityLinkRTRMain.LOG.severe(String.format("Can't open serial port %s", comPort.getSystemPortName()));
                 try
                   {
                     comPort.closePort();
@@ -119,6 +125,7 @@ public class SerialPortReader implements Runnable
             else
               {
                 System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
+                CityLinkRTRMain.LOG.severe(String.format("Can't open serial port %s", comPort.getSystemPortName()));
                 sPortInst.setState("ERROR");
                 try
                   {

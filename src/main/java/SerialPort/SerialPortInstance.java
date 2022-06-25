@@ -1,5 +1,11 @@
 package SerialPort;
 
+import java.util.logging.Logger;
+
+import org.w3c.dom.html.HTMLOListElement;
+
+import CityLink2RTR.CityLinkRTRMain;
+
 public class SerialPortInstance
   {
     private int isEnabled;
