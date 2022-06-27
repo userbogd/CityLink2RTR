@@ -70,6 +70,8 @@ public class MonitorHTTPServer
               {
                 String s = new String(buffer).substring(0, reqlength);
                 String res = new String("reset_btn=Reset");
+                String stop = new String ("stop_btn=Stop");
+                
                 if (s.equals(res))
                   {
                     for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
@@ -89,7 +91,16 @@ public class MonitorHTTPServer
                         CityLinkRTRMain.udpClientPool.get(i).setPacketsErrors(0);
                       }
                   }
+
+              
+                if (s.equals(stop))
+                  {
+                    CityLinkRTRMain.StopRetranslator();
+                    
+                  }
               }
+
+            
 
             String rtrName = CityLinkRTRMain.ini.get("RTR", "username");
             String rtrVer = CityLinkRTRMain.ini.get("RTR", "version");
@@ -189,9 +200,9 @@ public class MonitorHTTPServer
               }
             builder.append("<br>");
             builder.append(
-                "<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>Refrash</button>\r\n");
+                "<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>Refrash</button></td>\r\n");
             builder.append(
-                "&nbsp<button type='submit' name ='reset_btn' value='Reset'>Reset counters</button><td></tr></form>\r\n");
+                "&nbsp<td><button type='submit' name ='reset_btn' value='Reset'>Reset counters</button></td><td><button type='submit' name ='stop_btn' value='Stop'>Stop</button></td></tr></form>\r\n");
 
             builder.append("</table>\r\n");
             builder.append("</td></tr></table>\r\n");

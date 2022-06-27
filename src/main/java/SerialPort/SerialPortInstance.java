@@ -1,18 +1,14 @@
 package SerialPort;
 
-import java.util.logging.Logger;
-
-import org.w3c.dom.html.HTMLOListElement;
-
-import CityLink2RTR.CityLinkRTRMain;
-
 public class SerialPortInstance
   {
     private int isEnabled;
-    private String username,name;
+    private String username, name;
     private int baudrate;
-    private long PacketsOk,PacketsErrors;
+    private long PacketsOk, PacketsErrors;
     private String State;
+    private SerialPortReader sr;
+    private boolean isRun;
 
     public SerialPortInstance(int isEnabled, String username, String name, int baudrate)
       {
@@ -24,21 +20,33 @@ public class SerialPortInstance
         this.State = "ERROR";
       }
 
+    public synchronized boolean isRun()
+      {
+        return isRun;
+      }
+
+    public synchronized void setRun(boolean isRun)
+      {
+        this.isRun = isRun;
+      }
+
     public void startSerialReader()
       {
-        new Thread(new SerialPortReader(this.name, this.baudrate, this)).start();
+        sr = new SerialPortReader(this.name, this.baudrate, this);
+        setRun(true);
+        new Thread(sr).start();
       }
 
     public synchronized void incPacketsOK()
       {
         ++this.PacketsOk;
       }
-   
+
     public synchronized void incPacketsError()
       {
         ++this.PacketsErrors;
-      }    
-    
+      }
+
     public synchronized int getIsEnabled()
       {
         return isEnabled;
@@ -108,7 +116,5 @@ public class SerialPortInstance
       {
         State = state;
       }
-
-
 
   }

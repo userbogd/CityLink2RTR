@@ -15,7 +15,7 @@ import CityLink2RTR.MainEventBufer;
 public class SerialPortReader implements Runnable
   {
     public static final int EVENT_LENTH = 13;
-    public static final int PORT_RESTART_INTERVAL = 10000;
+    public static final int PORT_RESTART_INTERVAL = 5000;
     SerialPort comPort;
     String portName;
     int portBaudrate;
@@ -27,7 +27,6 @@ public class SerialPortReader implements Runnable
         try (InputStream is = SerialPortReader.class.getClassLoader().getResourceAsStream("logging.properties"))
           {
             LogManager.getLogManager().readConfiguration(is);
-
           }
         catch (IOException e)
           {
@@ -41,22 +40,22 @@ public class SerialPortReader implements Runnable
         portName = new String(Port);
         portBaudrate = Baudrate;
         sPortInst = sPort;
-        Runtime.getRuntime().addShutdownHook(new Thread()
-          {
-            public void run()
-              {
-                try
-                  {
-                    LOG.info(String.format("Stop thread of serial reader %s", comPort.getPortDescription()));
-                    comPort.closePort();
-                  }
-                catch (Exception e)
-                  {
-                    LOG.log(Level.SEVERE, e.getMessage(), e);
-                  }
-              }
-          });
       }
+    
+    public void stop()
+    {
+      try
+        {
+          LOG.info(String.format("Stop thread of serial reader %s", comPort.getPortDescription()));
+          if (comPort.isOpen())
+            comPort.closePort();
+        }
+      catch (Exception e)
+        {
+          LOG.log(Level.SEVERE, e.getMessage(), e);
+        }
+      
+    }
 
     @Override
     public void run()
@@ -80,6 +79,11 @@ public class SerialPortReader implements Runnable
                           {
                             if (comPort.bytesAvailable() == -1)
                               throw new java.lang.RuntimeException("Port is closed unexpected!");
+                            if(!sPortInst.isRun())
+                              {
+                                stop();
+                                return;
+                              }
                             Thread.sleep(20);
                           }
                         while (ReadyBytes != comPort.bytesAvailable())
@@ -128,12 +132,13 @@ public class SerialPortReader implements Runnable
                 sPortInst.setState("ERROR");
                 try
                   {
-                    comPort.closePort();
+                    if (comPort.isOpen())
+                      comPort.closePort();
                     Thread.sleep(PORT_RESTART_INTERVAL);
                   }
                 catch (InterruptedException ex)
                   {
-
+                    LOG.log(Level.SEVERE, e.getMessage(), e);
                   }
               }
           }

@@ -73,7 +73,8 @@ public class CityLinkRTRMain
           {
             LogManager.getLogManager().readConfiguration(is);
 
-          } catch (IOException e)
+          }
+        catch (IOException e)
           {
             e.printStackTrace();
           }
@@ -132,10 +133,12 @@ public class CityLinkRTRMain
                 ini.put("SERIAL", "baudrate", 19200);
 
                 ini.store();
-              } catch (InvalidFileFormatException e)
+              }
+            catch (InvalidFileFormatException e)
               {
                 e.printStackTrace();
-              } catch (IOException e)
+              }
+            catch (IOException e)
               {
                 e.printStackTrace();
               }
@@ -146,7 +149,8 @@ public class CityLinkRTRMain
             ini = new Ini(conf);
             ini.getConfig().setMultiSection(true);
             ini.getConfig().setMultiOption(true);
-          } catch (IOException e)
+          }
+        catch (IOException e)
           {
             e.printStackTrace();
             LOG.log(Level.SEVERE, e.getMessage(), e);
@@ -177,7 +181,9 @@ public class CityLinkRTRMain
                 sec.get("username", i), Integer.parseInt(sec.get("port", i)));
             udpServerPool.add(udpServer);
             if (udpServer.getIsEnabled() > 0)
-              udpServer.startUDPServer();
+              {
+                udpServer.startUDPServer();
+              }
           }
 
         // Read all UDPCLIENT sections and start threads
@@ -198,25 +204,40 @@ public class CityLinkRTRMain
           {
             public void run()
               {
-                try
-                  {
-                    Thread.sleep(200);
-                    LOG.info("Shutting down retranslator main thread");
-                    for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
-                      {
-                        if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
-                          CityLinkRTRMain.udpClientPool.get(i).closeUDPClient();
-                      }
-
-                  } catch (InterruptedException e)
-                  {
-                    Thread.currentThread().interrupt();
-                    e.printStackTrace();
-                    LOG.log(Level.SEVERE, e.getMessage(), e);
-                  }
+                StopRetranslator();
               }
           });
 
+      }
+
+    public static void StopRetranslator()
+      {
+        LOG.info("Stop requested");
+        try
+          {
+            LOG.info("Shutting down retranslator main thread...");
+            
+           
+            for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
+              {
+                if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
+                  CityLinkRTRMain.udpClientPool.get(i).closeUDPClient();
+              }
+            for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
+              {
+                if (CityLinkRTRMain.serialPool.get(i).getIsEnabled() > 0)
+                  {
+                    CityLinkRTRMain.serialPool.get(i).setRun(false);
+                  }
+              }
+            LOG.info("Application terminated");
+          }
+        catch (Exception e)
+          {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            return;
+          }
+        System.exit(0);
       }
 
   }
