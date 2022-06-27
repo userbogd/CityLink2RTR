@@ -7,13 +7,28 @@ import CityLink2RTR.CityLinkRTRMain;
 import CityLink2RTR.MainEventBufer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class MonitorHTTPServer
   {
+    static
+      {
+        try (InputStream is = MonitorHTTPServer.class.getClassLoader().getResourceAsStream("logging.properties"))
+          {
+            LogManager.getLogManager().readConfiguration(is);
+
+          } catch (IOException e)
+          {
+            e.printStackTrace();
+          }
+      }
+    public static final Logger LOG = Logger.getLogger(MonitorHTTPServer.class.getName());
 
     public MonitorHTTPServer(int port)
       {
@@ -25,7 +40,7 @@ public class MonitorHTTPServer
             server.bind(new InetSocketAddress(port), 0);
             server.setExecutor(null);
             server.start();
-            System.out.format("HTTP server started on port %d\r\n", port);
+            LOG.info(String.format("HTTP server started on port %d", port));
             HttpContext context = server.createContext("/", new EchoHandler());
             context.setAuthenticator(new Auth());
           } catch (IOException e)
@@ -126,7 +141,7 @@ public class MonitorHTTPServer
 
                     builder.append("Serial port <font color=#006699><b>");
                     builder.append(pName);
-                    if(pState.equals("OK"))
+                    if (pState.equals("OK"))
                       builder.append(" [State:<font color=#009900>" + pState + "</font>; ");
                     else
                       builder.append(" [State:<font color=#ff0000>" + pState + "</font>; ");

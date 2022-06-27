@@ -3,7 +3,6 @@ package CityLink2RTR;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +23,6 @@ import java.util.logging.Logger;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.jar.Manifest;
 
 class SendUDPClientRoutine extends TimerTask
   {
@@ -63,25 +61,24 @@ public class CityLinkRTRMain
     static MonitorHTTPServer HTTP;
     public static final String INI_FILE_NAME = "rtrconfig.ini";
     public static Ini ini;
-    public static final String LOG_FILE_NAME = "rtr.%u.log";
     public static Date StartDate;
     public static List<SerialPortInstance> serialPool;
     public static List<ClientUDPInstance> udpClientPool;
     public static List<ServerUDPInstance> udpServerPool;
     public static MainEventBufer MB;
     public String version;
-    static {
-      // must set before the Logger
-      // loads logging.properties from the classpath
-      try (InputStream is = CityLinkRTRMain.class.getClassLoader().
-              getResourceAsStream("logging.properties")) {
-          LogManager.getLogManager().readConfiguration(is);
-      } catch (IOException e) {
-          e.printStackTrace();
+    static
+      {
+        try (InputStream is = CityLinkRTRMain.class.getClassLoader().getResourceAsStream("logging.properties"))
+          {
+            LogManager.getLogManager().readConfiguration(is);
+
+          } catch (IOException e)
+          {
+            e.printStackTrace();
+          }
       }
-  }
-    public static final Logger LOG = Logger.getLogger(
-        CityLinkRTRMain.class.getName());
+    public static final Logger LOG = Logger.getLogger(CityLinkRTRMain.class.getName());
 
     public CityLinkRTRMain()
       {
@@ -90,10 +87,8 @@ public class CityLinkRTRMain
 
     public static void main(String[] args)
       {
-        //LogManager().readConfiguration(CityLinkRTRMain.class.getResourceAsStream("logging.properties"));
+        // LogManager().readConfiguration(CityLinkRTRMain.class.getResourceAsStream("logging.properties"));
         LOG.info("Start retranlator");
-        System.out.println("Start retranslator");
-        System.out.println("Charset is:" + Charset.defaultCharset().name());
         StartDate = new Date(); // fix start date
 
         MB = new MainEventBufer();
@@ -108,7 +103,7 @@ public class CityLinkRTRMain
         File conf = new File(filename);
         if (!conf.exists())
           {
-            System.out.println("Conf file not found. Created default");
+            LOG.warning("Config file does not exists.Recreated default");
             try
               {
                 conf.createNewFile();
@@ -137,12 +132,10 @@ public class CityLinkRTRMain
                 ini.put("SERIAL", "baudrate", 19200);
 
                 ini.store();
-              }
-            catch (InvalidFileFormatException e)
+              } catch (InvalidFileFormatException e)
               {
                 e.printStackTrace();
-              }
-            catch (IOException e)
+              } catch (IOException e)
               {
                 e.printStackTrace();
               }
@@ -153,11 +146,10 @@ public class CityLinkRTRMain
             ini = new Ini(conf);
             ini.getConfig().setMultiSection(true);
             ini.getConfig().setMultiOption(true);
-          }
-        catch (IOException e)
+          } catch (IOException e)
           {
             e.printStackTrace();
-            System.out.println("Default ini file creation ERROR");
+            LOG.log(Level.SEVERE, e.getMessage(), e);
             return;
           }
 
@@ -169,7 +161,6 @@ public class CityLinkRTRMain
 
         // Read all SERIAL sections and start threads
         Section sec = ini.get("SERIAL");
-        System.out.format("Found and intialize %d serial ports\r\n", sec.length("enabled"));
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             SerialPortInstance sPort = new SerialPortInstance(Integer.parseInt(sec.get("enabled", i)),
@@ -180,7 +171,6 @@ public class CityLinkRTRMain
           }
 
         sec = ini.get("UDPSERVER");
-        System.out.format("Found %d udp receivers\r\n", sec.length("enabled"));
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             ServerUDPInstance udpServer = new ServerUDPInstance(Integer.parseInt(sec.get("enabled", i)),
@@ -192,7 +182,6 @@ public class CityLinkRTRMain
 
         // Read all UDPCLIENT sections and start threads
         sec = ini.get("UDPCLIENT");
-        System.out.format("Found %d udp transmitters\r\n", sec.length("enabled"));
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             ClientUDPInstance udpClient = new ClientUDPInstance(Integer.parseInt(sec.get("enabled", i)),
@@ -200,9 +189,10 @@ public class CityLinkRTRMain
             udpClientPool.add(udpClient);
             if (udpClient.getIsEnabled() > 0)
               udpClient.startUDPClient();
+
           }
         udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
-        System.out.println("Retranslator initialise complete");
+        LOG.info("Retranslator initialise complete");
 
         Runtime.getRuntime().addShutdownHook(new Thread()
           {
@@ -211,19 +201,18 @@ public class CityLinkRTRMain
                 try
                   {
                     Thread.sleep(200);
-                    System.out.println("Shutting down retranslator main thread");
-                    // some cleaning up code...
+                    LOG.info("Shutting down retranslator main thread");
                     for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
                       {
                         if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
                           CityLinkRTRMain.udpClientPool.get(i).closeUDPClient();
                       }
 
-                  }
-                catch (InterruptedException e)
+                  } catch (InterruptedException e)
                   {
                     Thread.currentThread().interrupt();
                     e.printStackTrace();
+                    LOG.log(Level.SEVERE, e.getMessage(), e);
                   }
               }
           });

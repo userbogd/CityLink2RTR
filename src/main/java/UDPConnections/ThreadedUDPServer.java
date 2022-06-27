@@ -1,10 +1,14 @@
 package UDPConnections;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
  * A class for handling a multi-threaded instance of a UDP server
@@ -26,6 +30,19 @@ public class ThreadedUDPServer implements Runnable
     /* Client relevant */
     public static ArrayList<Connection> CLIENTS = new ArrayList<Connection>();
 
+    static
+      {
+        try (InputStream is = ThreadedUDPServer.class.getClassLoader().getResourceAsStream("logging.properties"))
+          {
+            LogManager.getLogManager().readConfiguration(is);
+
+          } catch (IOException e)
+          {
+            e.printStackTrace();
+          }
+      }
+    public static final Logger LOG = Logger.getLogger(ThreadedUDPServer.class.getName());
+
     /**
      * Construct a new instance of a multi-threaded udp server
      * 
@@ -40,7 +57,8 @@ public class ThreadedUDPServer implements Runnable
             this.init();
           } catch (SocketException e)
           {
-            System.err.println("Unable to initialise the server..." + e.getMessage());
+            e.printStackTrace();
+            LOG.log(Level.SEVERE, e.getMessage(), e);
           }
       }
 
@@ -86,7 +104,8 @@ public class ThreadedUDPServer implements Runnable
                     socket.send(dgpack);
                   } catch (IOException e)
                   {
-                    System.out.println(e.getMessage());
+                    e.printStackTrace();
+                    LOG.log(Level.SEVERE, e.getMessage(), e);
                   }
               }
           };
@@ -129,7 +148,7 @@ public class ThreadedUDPServer implements Runnable
                         socket.receive(dgpacket);
                       } catch (IOException e)
                       {
-                        e.printStackTrace();
+                        LOG.log(Level.SEVERE, e.getMessage(), e);
                       }
 
                     // handler.process(new Packet(dgpacket.getData(), new Connection(socket,
@@ -145,10 +164,12 @@ public class ThreadedUDPServer implements Runnable
     /**
      * The run method of this runnable thread object.
      */
+    
+  
     public void run()
       {
         running = true;
-        System.out.println("UDP server started on port " + port);
+        LOG.info(String.format("UDP server started on port %s", port));
       }
 
   }

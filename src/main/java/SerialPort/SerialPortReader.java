@@ -1,22 +1,40 @@
 package SerialPort;
 
-import org.apache.commons.math3.analysis.function.Log;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import com.fazecast.jSerialComm.SerialPort;
 
 import CityLink2RTR.CityLinkEventPacket;
-import CityLink2RTR.CityLinkRTRMain;
 import CityLink2RTR.Helpers;
 import CityLink2RTR.MainEventBufer;
 
 public class SerialPortReader implements Runnable
   {
     public static final int EVENT_LENTH = 13;
+    public static final int PORT_RESTART_INTERVAL = 10000;
     SerialPort comPort;
     String portName;
     int portBaudrate;
     SerialPortInstance sPortInst;
     int ReadyBytes;
+
+    static
+      {
+        try (InputStream is = SerialPortReader.class.getClassLoader().getResourceAsStream("logging.properties"))
+          {
+            LogManager.getLogManager().readConfiguration(is);
+
+          }
+        catch (IOException e)
+          {
+            e.printStackTrace();
+          }
+      }
+    public static final Logger LOG = Logger.getLogger(SerialPortReader.class.getName());
 
     public SerialPortReader(String Port, int Baudrate, SerialPortInstance sPort)
       {
@@ -29,12 +47,12 @@ public class SerialPortReader implements Runnable
               {
                 try
                   {
-                    System.out.println("Shutting down thread:" + comPort.getSystemPortName());
+                    LOG.info(String.format("Stop thread of serial reader %s", comPort.getPortDescription()));
                     comPort.closePort();
                   }
                 catch (Exception e)
                   {
-                    e.printStackTrace();
+                    LOG.log(Level.SEVERE, e.getMessage(), e);
                   }
               }
           });
@@ -51,28 +69,23 @@ public class SerialPortReader implements Runnable
                 comPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
                 comPort.setBaudRate(portBaudrate);
                 comPort.openPort();
-              }
-            catch (Exception e)
-              {
-                System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
-                CityLinkRTRMain.LOG.severe(String.format("Can't open serial port %s", comPort.getSystemPortName()));
-                
-                e.printStackTrace();
-                sPortInst.setState("ERROR");
-              }
-
-            if (comPort.isOpen())
-              {
-                System.out.format("Serial port %s opened OK\r\n", comPort.getPortDescription());
-                sPortInst.setState("OK");
-                try
+                if (comPort.isOpen())
                   {
+                    LOG.info(String.format("Serial port %s opened OK", comPort.getPortDescription()));
+                    sPortInst.setState("OK");
+
                     while (true)
                       {
                         while (comPort.bytesAvailable() < EVENT_LENTH)
-                          Thread.sleep(20);
+                          {
+                            if (comPort.bytesAvailable() == -1)
+                              throw new java.lang.RuntimeException("Port is closed unexpected!");
+                            Thread.sleep(20);
+                          }
                         while (ReadyBytes != comPort.bytesAvailable())
                           {
+                            if (comPort.bytesAvailable() == -1)
+                              throw new java.lang.RuntimeException("Port is closed unexpected!");
                             Thread.sleep(10);
                             ReadyBytes = comPort.bytesAvailable();
                           }
@@ -104,38 +117,26 @@ public class SerialPortReader implements Runnable
                           }
                       }
                   }
-                catch (Exception e)
+                else
                   {
-                    System.out.println(e.getMessage());
-                    e.printStackTrace();
-                  }
-                System.out.format("Serial port %s ERROR\r\n", comPort.getSystemPortName());
-                CityLinkRTRMain.LOG.severe(String.format("Can't open serial port %s", comPort.getSystemPortName()));
-                try
-                  {
-                    comPort.closePort();
-                    sPortInst.setState("ERROR");
-                    Thread.sleep(10000);
-                  }
-                catch (InterruptedException e)
-                  {
-                    e.printStackTrace();
+                    throw new java.lang.RuntimeException(String.format("Can't open port %s", portName));
                   }
               }
-            else
+            catch (Exception e)
               {
-                System.out.format("Error. Can't open serial port %s\r\n", comPort.getSystemPortName());
-                CityLinkRTRMain.LOG.severe(String.format("Can't open serial port %s", comPort.getSystemPortName()));
+                LOG.log(Level.SEVERE, e.getMessage(), e);
                 sPortInst.setState("ERROR");
                 try
                   {
-                    Thread.sleep(10000);
+                    comPort.closePort();
+                    Thread.sleep(PORT_RESTART_INTERVAL);
                   }
-                catch (InterruptedException e)
+                catch (InterruptedException ex)
                   {
-                    e.printStackTrace();
+
                   }
               }
           }
       }
+
   }
