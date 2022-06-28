@@ -204,7 +204,7 @@ public class CityLinkRTRMain
           {
             public void run()
               {
-                StopRetranslator();
+                //StopRetranslator();
               }
           });
 
@@ -216,8 +216,7 @@ public class CityLinkRTRMain
         try
           {
             LOG.info("Shutting down retranslator main thread...");
-            
-           
+
             for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
               {
                 if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
@@ -228,6 +227,7 @@ public class CityLinkRTRMain
                 if (CityLinkRTRMain.serialPool.get(i).getIsEnabled() > 0)
                   {
                     CityLinkRTRMain.serialPool.get(i).setRun(false);
+                    
                   }
               }
             LOG.info("Application terminated");
@@ -235,9 +235,18 @@ public class CityLinkRTRMain
         catch (Exception e)
           {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return;
           }
-        System.exit(0);
+        LOG.info("Wait for stopping all threads");
+        try
+          {
+            Thread.sleep(10000);
+          }
+        catch (Exception e)
+          {
+
+          }
+        LOG.info("Application terminated");
+        //System.exit(0);
       }
 
   }
