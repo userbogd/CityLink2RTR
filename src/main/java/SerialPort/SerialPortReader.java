@@ -15,7 +15,7 @@ import CityLink2RTR.MainEventBufer;
 public class SerialPortReader implements Runnable
   {
     public static final int EVENT_LENTH = 13;
-    public static final int PORT_RESTART_INTERVAL = 5000;
+    public static final int PORT_RESTART_INTERVAL = 5;
     SerialPort comPort;
     String portName;
     int portBaudrate;
@@ -128,21 +128,24 @@ public class SerialPortReader implements Runnable
             catch (Exception e)
               {
                 LOG.log(Level.SEVERE, e.getMessage(), e);
+                comPort.closePort();
                 sPortInst.setState("ERROR");
-                try
-                  {
-                    comPort.closePort();
-                    Thread.sleep(PORT_RESTART_INTERVAL);
-                  }
-                catch (InterruptedException ex)
-                  {
-                    LOG.log(Level.SEVERE, e.getMessage(), e);
-                  }
+              }
+
+            try
+              {
+                int i = PORT_RESTART_INTERVAL * 10;
+                while (--i > 0 && sPortInst.isRun())
+                  Thread.sleep(100);
+              }
+            catch (InterruptedException ex)
+              {
+                LOG.log(Level.SEVERE, ex.getMessage(), ex);
               }
           }
-        
-       stop(); 
-        
+
+        stop();
+
       }
 
   }

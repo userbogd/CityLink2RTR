@@ -1,8 +1,10 @@
 package CityLink2RTR;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -67,6 +69,9 @@ public class CityLinkRTRMain
     public static List<ServerUDPInstance> udpServerPool;
     public static MainEventBufer MB;
     public String version;
+
+    private static BufferedReader reader;
+
     static
       {
         try (InputStream is = CityLinkRTRMain.class.getClassLoader().getResourceAsStream("logging.properties"))
@@ -99,6 +104,9 @@ public class CityLinkRTRMain
 
         Timer udpClientSendTimer = new Timer();
         TimerTask udpClientSendTimerTask = new SendUDPClientRoutine();
+
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(System.in));
 
         String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
         File conf = new File(filename);
@@ -200,53 +208,75 @@ public class CityLinkRTRMain
         udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
         LOG.info("Retranslator initialise complete");
 
-        Runtime.getRuntime().addShutdownHook(new Thread()
+        while (true)
           {
-            public void run()
+            try
               {
-                //StopRetranslator();
+                String com = reader.readLine();
+                if (com.equals("exit"))
+                  {
+                    StopRetranslator();
+                  }
+                else if (com.equals("info"))
+                  {
+                    PrintInfo();
+                  }
+                else
+                  {
+                    System.out.println("This is CityLink UDP retranslator. Supported commands:\r\n"
+                        + " exit  -  shutdown retranslator\r\n"
+                        + " info  -  get information and statistics\r\n"
+                        + " help  -  this help\r\n");
+                  }
               }
-          });
+            catch (IOException e)
+              {
+                LOG.log(Level.SEVERE, e.getMessage(), e);
+              }
+
+          }
+
+      }
+
+    public static void PrintInfo()
+      {
 
       }
 
     public static void StopRetranslator()
       {
-        LOG.info("Stop requested");
+        LOG.info("Shutting down retranslator main thread...");
         try
           {
-            LOG.info("Shutting down retranslator main thread...");
-
             for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
               {
                 if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
                   CityLinkRTRMain.udpClientPool.get(i).closeUDPClient();
               }
+
             for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
               {
                 if (CityLinkRTRMain.serialPool.get(i).getIsEnabled() > 0)
                   {
                     CityLinkRTRMain.serialPool.get(i).setRun(false);
-                    
                   }
               }
-            LOG.info("Application terminated");
           }
         catch (Exception e)
           {
             LOG.log(Level.SEVERE, e.getMessage(), e);
           }
-        LOG.info("Wait for stopping all threads");
+        LOG.info("Waiting external threads trmination...");
         try
           {
-            Thread.sleep(10000);
+            Thread.sleep(1000);
           }
-        catch (Exception e)
+        catch (InterruptedException e)
           {
-
+            e.printStackTrace();
           }
-        LOG.info("Application terminated");
-        //System.exit(0);
+        LOG.info("Application terminated");       
+        System.exit(0);
       }
 
   }

@@ -1,5 +1,7 @@
 package UDPConnections;
 
+import CityLink2RTR.CityLinkRTRMain;
+
 public class ClientUDPInstance
   {
     private int isEnabled;
@@ -28,7 +30,7 @@ public class ClientUDPInstance
     
     public void closeUDPClient()
       {
-        this.cl.close();;
+        this.cl.close();
       }
 
     public synchronized void incPacketsOK()

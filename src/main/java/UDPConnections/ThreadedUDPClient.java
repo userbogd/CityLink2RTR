@@ -19,14 +19,14 @@ import java.util.logging.Logger;
  */
 public class ThreadedUDPClient implements Runnable
   {
-
     static
       {
         try (InputStream is = ThreadedUDPClient.class.getClassLoader().getResourceAsStream("logging.properties"))
           {
             LogManager.getLogManager().readConfiguration(is);
 
-          } catch (IOException e)
+          }
+        catch (IOException e)
           {
             e.printStackTrace();
           }
@@ -46,7 +46,8 @@ public class ThreadedUDPClient implements Runnable
             socket = new DatagramSocket();
             connection = new Connection(socket, InetAddress.getByName(addr), port, 0);
             this.init();
-          } catch (SocketException | UnknownHostException e)
+          }
+        catch (SocketException | UnknownHostException e)
           {
             LOG.log(Level.SEVERE, e.getMessage(), e);
           }
@@ -79,9 +80,12 @@ public class ThreadedUDPClient implements Runnable
         send.start();
       }
 
+    
+   
     /**
      * Receive data on the given server connection
      */
+   /*
     public void receive(final PacketHandler handler)
       {
         receive = new Thread("receive_thread")
@@ -96,7 +100,8 @@ public class ThreadedUDPClient implements Runnable
                     try
                       {
                         socket.receive(dgpacket);
-                      } catch (IOException e)
+                      }
+                    catch (IOException e)
                       {
                         LOG.log(Level.SEVERE, e.getMessage(), e);
                       }
@@ -109,12 +114,13 @@ public class ThreadedUDPClient implements Runnable
         receive.start();
       }
 
+*/
     /**
      * Close the current connection for this client
      */
     public void close()
       {
-        LOG.info(String.format("UDP disconnecting from %s", connection.getAddress()));
+        LOG.info(String.format("UDP client stopped with address %s", connection.getAddress()));
         connection.close();
         running = false;
       }
@@ -123,7 +129,7 @@ public class ThreadedUDPClient implements Runnable
     public void run()
       {
         running = true;
-        LOG.info(String.format("UDP client connected to %s", connection.getAddress()));
+        LOG.info(String.format("UDP client started with address %s", connection.getAddress()));
       }
 
   }
