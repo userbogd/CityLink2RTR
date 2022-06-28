@@ -85,7 +85,6 @@ public class ThreadedUDPClient implements Runnable
     /**
      * Receive data on the given server connection
      */
-   /*
     public void receive(final PacketHandler handler)
       {
         receive = new Thread("receive_thread")
@@ -114,7 +113,7 @@ public class ThreadedUDPClient implements Runnable
         receive.start();
       }
 
-*/
+
     /**
      * Close the current connection for this client
      */

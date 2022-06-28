@@ -221,6 +221,30 @@ public class CityLinkRTRMain
                   {
                     PrintInfo();
                   }
+                else if (com.equals("usb"))
+                  {
+                    try
+                      {
+                        Runtime rt = Runtime.getRuntime();
+                        String cmdUnload = "sudo modprobe -r ch341";
+                        String cmdLoad = "sudo modprobe ch341";
+                        System.out.println(cmdUnload);
+                        Process pr = rt.exec(cmdUnload);
+                        int exitVal;
+                        exitVal = pr.waitFor();
+                        System.out.println("Exited with error code " + exitVal);
+                        System.out.println(cmdLoad);
+                        pr = rt.exec(cmdLoad);           
+                        exitVal = pr.waitFor();
+                        System.out.println("Exited with error code " + exitVal);
+                      }
+                    catch (InterruptedException e)
+                      {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                      }
+
+                  }
                 else
                   {
                     System.out.println("This is CityLink UDP retranslator. Supported commands:\r\n"
@@ -275,7 +299,7 @@ public class CityLinkRTRMain
           {
             e.printStackTrace();
           }
-        LOG.info("Application terminated");       
+        LOG.info("Application terminated");
         System.exit(0);
       }
 

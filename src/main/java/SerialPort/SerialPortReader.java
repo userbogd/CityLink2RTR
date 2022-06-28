@@ -55,7 +55,7 @@ public class SerialPortReader implements Runnable
           }
 
       }
-
+    
     @Override
     public void run()
       {
@@ -71,7 +71,8 @@ public class SerialPortReader implements Runnable
                   {
                     LOG.info(String.format("Serial port %s opened OK", comPort.getPortDescription()));
                     sPortInst.setState("OK");
-
+                    byte[] arr = {'A','T','Z'};
+                    comPort.writeBytes(arr, 3);
                     while (true)
                       {
                         while (comPort.bytesAvailable() < EVENT_LENTH)
