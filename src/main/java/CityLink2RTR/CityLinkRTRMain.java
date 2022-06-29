@@ -70,8 +70,6 @@ public class CityLinkRTRMain
     public static MainEventBufer MB;
     public String version;
 
-    private static BufferedReader reader;
-
     static
       {
         try (InputStream is = CityLinkRTRMain.class.getClassLoader().getResourceAsStream("logging.properties"))
@@ -105,8 +103,7 @@ public class CityLinkRTRMain
         Timer udpClientSendTimer = new Timer();
         TimerTask udpClientSendTimerTask = new SendUDPClientRoutine();
 
-        BufferedReader reader = new BufferedReader(
-            new InputStreamReader(System.in));
+
 
         String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
         File conf = new File(filename);
@@ -182,6 +179,7 @@ public class CityLinkRTRMain
               sPort.startSerialReader();
           }
 
+        // Read all UDPSERVER sections and start threads
         sec = ini.get("UDPSERVER");
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
@@ -205,60 +203,56 @@ public class CityLinkRTRMain
               udpClient.startUDPClient();
 
           }
+        
         udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
         LOG.info("Retranslator initialise complete");
 
-        while (true)
+        try
           {
-            try
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(System.in));
+            while (true)
               {
-                String com = reader.readLine();
-                if (com.equals("exit"))
+                
+                try
                   {
-                    StopRetranslator();
-                  }
-                else if (com.equals("info"))
-                  {
-                    PrintInfo();
-                  }
-                else if (com.equals("usb"))
-                  {
-                    try
+                    String com = new String(reader.readLine());
+                    if (com.length() > 0)
                       {
-                        Runtime rt = Runtime.getRuntime();
-                        String cmdUnload = "sudo modprobe -r ch341";
-                        String cmdLoad = "sudo modprobe ch341";
-                        System.out.println(cmdUnload);
-                        Process pr = rt.exec(cmdUnload);
-                        int exitVal;
-                        exitVal = pr.waitFor();
-                        System.out.println("Exited with error code " + exitVal);
-                        System.out.println(cmdLoad);
-                        pr = rt.exec(cmdLoad);           
-                        exitVal = pr.waitFor();
-                        System.out.println("Exited with error code " + exitVal);
+                        if (com.equals("exit"))
+                          {
+                            StopRetranslator();
+                          }
+                        else if (com.equals("info"))
+                          {
+                            PrintInfo();
+                          }
+                        else
+                          {
+                            System.out.println("This is CityLink UDP retranslator. Supported commands:\r\n"
+                                + " exit  -  shutdown retranslator\r\n"
+                                + " info  -  get information and statistics\r\n"
+                                + " help  -  this help\r\n");
+                          }
                       }
-                    catch (InterruptedException e)
-                      {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                      }
-
+                    
+                  
+                  Thread.sleep(50);
                   }
-                else
+                catch (Exception e)
                   {
-                    System.out.println("This is CityLink UDP retranslator. Supported commands:\r\n"
-                        + " exit  -  shutdown retranslator\r\n"
-                        + " info  -  get information and statistics\r\n"
-                        + " help  -  this help\r\n");
-                  }
+                    LOG.log(Level.SEVERE, e.getMessage(), e);
+                  }   
               }
-            catch (IOException e)
-              {
-                LOG.log(Level.SEVERE, e.getMessage(), e);
-              }
-
           }
+        catch (Exception e)
+          {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+          }
+        
+        
+        
+        
 
       }
 
