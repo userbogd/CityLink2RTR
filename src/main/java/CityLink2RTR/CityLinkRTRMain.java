@@ -103,8 +103,6 @@ public class CityLinkRTRMain
         Timer udpClientSendTimer = new Timer();
         TimerTask udpClientSendTimerTask = new SendUDPClientRoutine();
 
-
-
         String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
         File conf = new File(filename);
         if (!conf.exists())
@@ -203,27 +201,26 @@ public class CityLinkRTRMain
               udpClient.startUDPClient();
 
           }
-        
-        udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
-        LOG.info("Retranslator initialise complete");
 
         try
           {
+            udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
+            LOG.info("Retranslator initialise complete");
+
             BufferedReader reader = new BufferedReader(
                 new InputStreamReader(System.in));
             while (true)
               {
-                
+
                 try
                   {
-                    String com = new String(reader.readLine());
-                    if (com.length() > 0)
+                    if (reader.readLine() != null)
                       {
-                        if (com.equals("exit"))
+                        if (reader.readLine().equals("exit"))
                           {
                             StopRetranslator();
                           }
-                        else if (com.equals("info"))
+                        else if (reader.readLine().equals("info"))
                           {
                             PrintInfo();
                           }
@@ -235,24 +232,21 @@ public class CityLinkRTRMain
                                 + " help  -  this help\r\n");
                           }
                       }
-                    
-                  
-                  Thread.sleep(50);
+
                   }
                 catch (Exception e)
                   {
                     LOG.log(Level.SEVERE, e.getMessage(), e);
-                  }   
+                  }
+
+                Thread.sleep(50);
+
               }
           }
         catch (Exception e)
           {
             LOG.log(Level.SEVERE, e.getMessage(), e);
           }
-        
-        
-        
-        
 
       }
 
