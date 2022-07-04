@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -21,6 +23,7 @@ public class ThreadedUDPServer implements Runnable
   {
     /* Server information */
     private int port;
+    private InetAddress BindAdr;
     private DatagramSocket socket;
     private boolean running;
 
@@ -48,12 +51,21 @@ public class ThreadedUDPServer implements Runnable
      * 
      * @param port
      */
-    public ThreadedUDPServer(int port)
+    public ThreadedUDPServer(int port, String bindip)
       {
         this.port = port;
-
         try
           {
+            this.BindAdr = InetAddress.getByName(bindip) ;
+          }
+        catch (UnknownHostException e1)
+          {
+            // TODO Auto-generated catch block
+            LOG.log(Level.SEVERE, e1.getMessage(), e1);
+          }
+        try
+          {
+            
             this.init();
           } catch (SocketException e)
           {
@@ -69,7 +81,8 @@ public class ThreadedUDPServer implements Runnable
      */
     public void init() throws SocketException
       {
-        this.socket = new DatagramSocket(this.port);
+        this.socket = new DatagramSocket(this.port, this.BindAdr);
+        
         process = new Thread(this, "server_process");
         process.start();
       }
@@ -169,7 +182,7 @@ public class ThreadedUDPServer implements Runnable
     public void run()
       {
         running = true;
-        LOG.info(String.format("UDP server started on port %s", port));
+        LOG.info(String.format("UDP server started on ip %s port %s", BindAdr.getCanonicalHostName(), port));
       }
 
   }

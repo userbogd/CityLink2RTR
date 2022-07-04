@@ -8,20 +8,24 @@ public class ServerUDPInstance
   {
     private int isEnabled;
     private String name;
+    private String BindIP;
     private int Port;
     private long PacketsOk, PacketsErrors;
     private ThreadedUDPServer sr;
 
-    public ServerUDPInstance(int isEnabled, String name, int port)
+    public ServerUDPInstance(int isEnabled, String name, String bindip, int port)
       {
         this.isEnabled = isEnabled;
         this.name = name;
+        this.BindIP = bindip;
         this.Port = port;
       }
 
+
+
     public void startUDPServer()
       {
-        this.sr = new ThreadedUDPServer(Port);
+        this.sr = new ThreadedUDPServer(Port, BindIP);
         this.sr.receive(new PacketHandler()
           {
             @Override
@@ -84,6 +88,15 @@ public class ServerUDPInstance
         this.name = name;
       }
 
+    public synchronized String getBindIP()
+      {
+        return BindIP;
+      }
+
+    public synchronized void setBindIP(String bindIP)
+      {
+        BindIP = bindIP;
+      }
     public synchronized int getPort()
       {
         return Port;

@@ -122,17 +122,18 @@ public class CityLinkRTRMain
                 ini.put("HTTP", "refreshrate", 5);
 
                 ini.put("UDPSERVER", "enabled", 0);
-                ini.put("UDPSERVER", "username", "Server name 1");
+                ini.put("UDPSERVER", "name", "Server name 1");
+                ini.put("UDPSERVER", "bindip", "127.0.0.1");
                 ini.put("UDPSERVER", "port", 60600);
 
                 ini.put("UDPCLIENT", "enabled", 0);
-                ini.put("UDPCLIENT", "username", "Client name 1");
+                ini.put("UDPCLIENT", "name", "Client name 1");
                 ini.put("UDPCLIENT", "url", "127.0.0.1");
                 ini.put("UDPCLIENT", "port", 60501);
 
                 ini.put("SERIAL", "enabled", 0);
-                ini.put("SERIAL", "username", "Serial port name 1");
-                ini.put("SERIAL", "name", "/dev/ttyUSB0");
+                ini.put("SERIAL", "name", "Serial port name 1");
+                ini.put("SERIAL", "portname", "/dev/ttyUSB0");
                 ini.put("SERIAL", "baudrate", 19200);
 
                 ini.store();
@@ -171,7 +172,9 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             SerialPortInstance sPort = new SerialPortInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("username", i), sec.get("name", i), Integer.parseInt(sec.get("baudrate", i)));
+                sec.get("name", i), 
+                sec.get("portname", i), 
+                Integer.parseInt(sec.get("baudrate", i)));
             serialPool.add(sPort);
             if (sPort.getIsEnabled() > 0)
               sPort.startSerialReader();
@@ -182,7 +185,9 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             ServerUDPInstance udpServer = new ServerUDPInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("username", i), Integer.parseInt(sec.get("port", i)));
+                sec.get("name", i),
+                sec.get("bindip", i),
+                Integer.parseInt(sec.get("port", i)));
             udpServerPool.add(udpServer);
             if (udpServer.getIsEnabled() > 0)
               {
@@ -195,7 +200,9 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             ClientUDPInstance udpClient = new ClientUDPInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("username", i), sec.get("url", i), Integer.parseInt(sec.get("port", i)));
+                sec.get("name", i), 
+                sec.get("url", i), 
+                Integer.parseInt(sec.get("port", i)));
             udpClientPool.add(udpClient);
             if (udpClient.getIsEnabled() > 0)
               udpClient.startUDPClient();
