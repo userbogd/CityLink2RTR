@@ -100,8 +100,6 @@ public class MonitorHTTPServer
                   }
               }
 
-            
-
             String rtrName = CityLinkRTRMain.ini.get("RTR", "username");
             String rtrVer = CityLinkRTRMain.ini.get("RTR", "version");
             String javaVersion = System.getProperty("java.version");
@@ -112,12 +110,12 @@ public class MonitorHTTPServer
             builder.append("<body>\r\n");
             builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>\r\n");
             builder.append(
-                "<tr><td align='left'><font size = '+2' face='Monospace' ><b>Software serial to UDP retranslator 'CityLink'  JAVA edition</b></font></td></tr>\r\n");
+                "<tr><td align='left'><font size = '+2' face='Consolas,Monospase' ><b>Software serial to UDP retranslator 'CityLink'  JAVA edition</b></font></td></tr>\r\n");
             builder.append("</table>\r\n");
             builder
-                .append("<table align = 'center' width='800' border ='1' cellspacing='2' cellpadding='2'><tr><td>\r\n");
-            builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>\r\n");
-            builder.append("<tr><font size = '+1' face='Monospace' >\r\n");
+                .append("<table align = 'center' width='1000' border ='1' cellspacing='0' cellpadding='4'><tr><td>\r\n");
+            builder.append("<table align = 'center' width='1000' border='0' cellspacing='0' cellpadding='0'>\r\n");
+            builder.append("<tr><font size = '+1' face='Consolas,Monospase' >\r\n");
             builder.append("Retranslator name: &nbsp; <font color=#006699><b>" + rtrName + "</font></b><br>\r\n");
             builder.append("Software version: &nbsp; <font color=#006699><b>" + rtrVer + "</font></b><br>\r\n");
             builder.append("JAVA SDK version: &nbsp; <font color=#006699><b>" + javaVersion + "</font></b><br>\r\n");
@@ -168,12 +166,14 @@ public class MonitorHTTPServer
                 if (CityLinkRTRMain.udpServerPool.get(i).getIsEnabled() > 0)
                   {
                     String pName = CityLinkRTRMain.udpServerPool.get(i).getName();
+                    String pBindIP = CityLinkRTRMain.udpServerPool.get(i).getBindIP();
                     String pPort = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPort());
                     String pOk = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsOk());
                     String pErr = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsErrors());
                     builder.append("UDP receiver <font color=#006699><b>");
                     builder.append(pName);
-                    builder.append(" [Port:" + pPort + "; ");
+                    builder.append(" [BindIP:" + pBindIP + "; ");
+                    builder.append("Port:" + pPort + "; ");
                     builder.append("Packets OK:<font color=#009900>" + pOk + "</font>; ");
                     builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</font></color></b><br>\r\n");
                   }
@@ -200,9 +200,9 @@ public class MonitorHTTPServer
               }
             builder.append("<br>");
             builder.append(
-                "<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>Refrash</button></td>\r\n");
+                "<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>REFRESH</button>\r\n");
             builder.append(
-                "&nbsp<td><button type='submit' name ='reset_btn' value='Reset'>Reset counters</button></td><td><button type='submit' name ='stop_btn' value='Stop'>Stop</button></td></tr></form>\r\n");
+                "&nbsp<button type='submit' name ='reset_btn' value='Reset'>RESET COUNTERS</button></td></tr></form>\r\n");
 
             builder.append("</table>\r\n");
             builder.append("</td></tr></table>\r\n");

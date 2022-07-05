@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -25,6 +26,8 @@ import java.util.logging.Logger;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
+import java.util.Scanner;
 
 class SendUDPClientRoutine extends TimerTask
   {
@@ -172,8 +175,8 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             SerialPortInstance sPort = new SerialPortInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("name", i), 
-                sec.get("portname", i), 
+                sec.get("name", i),
+                sec.get("portname", i),
                 Integer.parseInt(sec.get("baudrate", i)));
             serialPool.add(sPort);
             if (sPort.getIsEnabled() > 0)
@@ -200,8 +203,8 @@ public class CityLinkRTRMain
         for (int i = 0; i < sec.length("enabled"); ++i)
           {
             ClientUDPInstance udpClient = new ClientUDPInstance(Integer.parseInt(sec.get("enabled", i)),
-                sec.get("name", i), 
-                sec.get("url", i), 
+                sec.get("name", i),
+                sec.get("url", i),
                 Integer.parseInt(sec.get("port", i)));
             udpClientPool.add(udpClient);
             if (udpClient.getIsEnabled() > 0)
@@ -213,41 +216,46 @@ public class CityLinkRTRMain
           {
             udpClientSendTimer.schedule(udpClientSendTimerTask, 200, 200);
             LOG.info("Retranslator initialise complete");
-
-            BufferedReader reader = new BufferedReader(
-                new InputStreamReader(System.in));
-            while (true)
+            try (Scanner in = new Scanner(System.in))
               {
-
-                try
+                while (true)
                   {
-                    if (reader.readLine() != null)
+                    try
                       {
-                        if (reader.readLine().equals("exit"))
+
+                        String input = in.nextLine();
+                        if (input != null)
                           {
-                            StopRetranslator();
+                            if (input.equals("exit"))
+                              {
+                                StopRetranslator();
+                              }
+                            else if (input.equals("quit"))
+                              {
+                                StopRetranslator();
+                              }
+                            else if (input.equals("info"))
+                              {
+                                PrintInfo();
+                              }
+                            else
+                              {
+                                System.out.println("This is CityLink UDP retranslator. Supported commands:\r\n"
+                                    + " exit  -  shutdown retranslator\r\n"
+                                    + " info  -  get information and statistics\r\n"
+                                    + " help  -  this help\r\n");
+                              }
                           }
-                        else if (reader.readLine().equals("info"))
-                          {
-                            PrintInfo();
-                          }
-                        else
-                          {
-                            System.out.println("This is CityLink UDP retranslator. Supported commands:\r\n"
-                                + " exit  -  shutdown retranslator\r\n"
-                                + " info  -  get information and statistics\r\n"
-                                + " help  -  this help\r\n");
-                          }
+
+                      }
+                    catch (Exception e)
+                      {
+                        //LOG.log(Level.SEVERE, e.getMessage(), e);
                       }
 
-                  }
-                catch (Exception e)
-                  {
-                    LOG.log(Level.SEVERE, e.getMessage(), e);
-                  }
+                    Thread.sleep(50);
 
-                Thread.sleep(50);
-
+                  }
               }
           }
         catch (Exception e)
@@ -259,7 +267,91 @@ public class CityLinkRTRMain
 
     public static void PrintInfo()
       {
+        StringBuilder builder = new StringBuilder();
+        String rtrName = CityLinkRTRMain.ini.get("RTR", "username");
+        String rtrVer = CityLinkRTRMain.ini.get("RTR", "version");
+        String javaVersion = System.getProperty("java.version");
+        builder.append("Retranslator name:" + rtrName + "\r\n");
+        builder.append("Software version:" + rtrVer + "\r\n");
+        builder.append("JAVA SDK version:" + javaVersion + "\r\n");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        Date date = new Date();
+        builder.append("Current time:" + formatter.format(date) + "\r\n");
+        builder.append("Started at:" + formatter.format(CityLinkRTRMain.StartDate)
+            + "\r\n");
+        long delta = (date.getTime() - CityLinkRTRMain.StartDate.getTime()) / 1000;
+        long d = delta / 86400;
+        long h = (delta % 86400) / 3600;
+        long m = ((delta % 86400) % 3600) / 60;
+        long s = ((delta % 86400) % 3600) % 60;
+        String dur = String.format("%dD %d:%02d:%02d", d, h, m, s);
+        builder.append("Uptime:" + dur + "\r\n");
+        
+        if (CityLinkRTRMain.ini.get("HTTP", "enabled", int.class) > 0)
+          {
+            builder.append("HTTP web interface started on port "
+                + CityLinkRTRMain.ini.get("HTTP", "httpport", int.class) + "\r\n");
+          }
 
+        builder.append("INPUT SERIAL:\r\n");
+        for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
+          {
+            if (CityLinkRTRMain.serialPool.get(i).getIsEnabled() > 0)
+              {
+                String pName = CityLinkRTRMain.serialPool.get(i).getName();
+                String pState = CityLinkRTRMain.serialPool.get(i).getState();
+                String pOk = String.valueOf(CityLinkRTRMain.serialPool.get(i).getPacketsOk());
+                String pErr = String.valueOf(CityLinkRTRMain.serialPool.get(i).getPacketsErrors());
+
+                builder.append("Serial port ");
+                builder.append(pName);
+                if (pState.equals("OK"))
+                  builder.append(" [State:" + pState + "; ");
+                else
+                  builder.append(" [State:" + pState + "; ");
+                builder.append("Packets OK:" + pOk + "; ");
+                builder.append("Errors:" + pErr + "]\r\n");
+              }
+          }
+        builder.append("INPUT UDP:\r\n");
+        for (int i = 0; i < CityLinkRTRMain.udpServerPool.size(); ++i)
+          {
+            if (CityLinkRTRMain.udpServerPool.get(i).getIsEnabled() > 0)
+              {
+                String pName = CityLinkRTRMain.udpServerPool.get(i).getName();
+                String pBindIP = CityLinkRTRMain.udpServerPool.get(i).getBindIP();
+                String pPort = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPort());
+                String pOk = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsOk());
+                String pErr = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsErrors());
+                builder.append("UDP receiver");
+                builder.append(pName);
+                builder.append(" [BindIP:" + pBindIP + "; ");
+                builder.append("Port:" + pPort + "; ");
+                builder.append("Packets OK:" + pOk + "; ");
+                builder.append("Errors:" + pErr + "]\r\n");
+              }
+          }
+
+        builder.append("OUTPUT:\r\n");
+        for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
+          {
+            if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
+              {
+                String pName = CityLinkRTRMain.udpClientPool.get(i).getName();
+                String pURL = CityLinkRTRMain.udpClientPool.get(i).getURL();
+                String pPort = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPort());
+                String pOk = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPacketsOk());
+                String pErr = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPacketsErrors());
+                builder.append("UDP sender");
+                builder.append(pName);
+                builder.append(" [URL:" + pURL + "; ");
+                builder.append("Port:" + pPort + "; ");
+                builder.append("Packets OK:" + pOk + "; ");
+                builder.append("Errors:" + pErr + "]\r\n");
+              }
+          }
+        
+        System.out.println(builder.toString());
       }
 
     public static void StopRetranslator()
