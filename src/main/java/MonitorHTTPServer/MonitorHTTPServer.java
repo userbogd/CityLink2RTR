@@ -106,39 +106,48 @@ public class MonitorHTTPServer
 
             builder.append("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\r\n");
             builder.append("<head><title>TRS RTR Ver_" + rtrVer + "</title>\r\n");
-            builder.append("<meta http-equiv='Refresh' content='10' charset='utf-8'/></head>\r\n");
+            builder.append("<meta http-equiv='Refresh' content='10' charset='utf-8'/>\r\n");
+            builder.append("  <style type=\"text/css\">\r\n"
+                + "   td { \r\n"
+                + "    font-size:11pt;height:20px;\r\n"
+                + "    font-family: Consolas,Monospase; \r\n"
+                + "    color: #333333;\r\n"
+                + "   }\r\n"
+                + "  </style>\r\n");
+            builder.append("</head>\r\n");
             builder.append("<body>\r\n");
             builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='1'>\r\n");
             builder.append(
-                "<tr><td align='left'><font size = '+2' face='Consolas,Monospase' ><b>Software serial to UDP retranslator 'CityLink'  JAVA edition</b></font></td></tr>\r\n");
+                "<tr><td align='left'><h3>Software serial to UDP retranslator 'CityLink'  JAVA edition</h3></td></tr>\r\n");
             builder.append("</table>\r\n");
             builder
-                .append("<table align = 'center' width='1000' border ='1' cellspacing='0' cellpadding='4'><tr><td>\r\n");
-            builder.append("<table align = 'center' width='1000' border='0' cellspacing='0' cellpadding='0'>\r\n");
-            builder.append("<tr><font size = '+1' face='Consolas,Monospase' >\r\n");
-            builder.append("Retranslator name: &nbsp; <font color=#006699><b>" + rtrName + "</font></b><br>\r\n");
-            builder.append("Software version: &nbsp; <font color=#006699><b>" + rtrVer + "</font></b><br>\r\n");
-            builder.append("JAVA SDK version: &nbsp; <font color=#006699><b>" + javaVersion + "</font></b><br>\r\n");
+                .append("<table align = 'center' width='800' border ='1' cellspacing='0' cellpadding='4'><tr><td>\r\n");
+            builder.append("<table align = 'center' width='800' border='0' cellspacing='0' cellpadding='0'>\r\n");
+            
+            builder.append("<tr><td>Retranslator name: &nbsp;</td><td><b>" + rtrName + "</b></td></tr>\r\n");
+            builder.append("<tr><td>Software version: &nbsp;</td><td><b>" + rtrVer + "</b></td></tr>\r\n");
+            builder.append("<tr><td>JAVA SDK version: &nbsp;</td><td><b>" + javaVersion + "</b></td></tr>\r\n");
             SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
             Date date = new Date();
-            builder.append("Current time: <font color=#006699><b>" + formatter.format(date) + "</font></b><br>\r\n");
-            builder.append("Started at: <font color=#006699><b>" + formatter.format(CityLinkRTRMain.StartDate)
-                + "</font></b><br>\r\n");
+            builder.append("<tr><td>Current time: </td><td><b>" + formatter.format(date) + "</b></td></tr>\r\n");
+            builder.append("<tr><td>Started at: </td><td><b>" + formatter.format(CityLinkRTRMain.StartDate)
+                + "</font></b></td></tr>\r\n");
             long delta = (date.getTime() - CityLinkRTRMain.StartDate.getTime()) / 1000;
             long d = delta / 86400;
             long h = (delta % 86400) / 3600;
             long m = ((delta % 86400) % 3600) / 60;
             long s = ((delta % 86400) % 3600) % 60;
             String dur = String.format("%dD %d:%02d:%02d", d, h, m, s);
-            builder.append("Uptime: <font color=#006699><b>" + dur + "</font></b><br><br>\r\n");
-
+            builder.append("<tr><td>Uptime: </td><td><b>" + dur + "</b></td></tr>\r\n");
+            builder.append("<tr><td></td></tr>\r\n");
             if (CityLinkRTRMain.ini.get("HTTP", "enabled", int.class) > 0)
               {
-                builder.append("HTTP web interface started on port <font color=#006699><b>"
-                    + CityLinkRTRMain.ini.get("HTTP", "httpport", int.class) + "</b></font><br><br>\r\n");
+                builder.append("<tr><td>HTTP web interface started on port <b>"
+                    + CityLinkRTRMain.ini.get("HTTP", "httpport", int.class) + "</b></td></tr>\r\n");
               }
 
-            builder.append("<b>INPUT SERIAL:</b><br>\r\n");
+            builder.append("<tr><td></td></tr>\r\n");
+            builder.append("<tr><td><b>INPUT SERIAL:</b></td></tr>\r\n");
             for (int i = 0; i < CityLinkRTRMain.serialPool.size(); ++i)
               {
                 if (CityLinkRTRMain.serialPool.get(i).getIsEnabled() > 0)
@@ -148,19 +157,19 @@ public class MonitorHTTPServer
                     String pOk = String.valueOf(CityLinkRTRMain.serialPool.get(i).getPacketsOk());
                     String pErr = String.valueOf(CityLinkRTRMain.serialPool.get(i).getPacketsErrors());
 
-                    builder.append("Serial port <font color=#006699><b>");
+                    builder.append("<tr><td>Serial port <b>");
                     builder.append(pName);
                     if (pState.equals("OK"))
                       builder.append(" [State:<font color=#009900>" + pState + "</font>; ");
                     else
                       builder.append(" [State:<font color=#ff0000>" + pState + "</font>; ");
                     builder.append("Packets OK:<font color=#009900>" + pOk + "</font>; ");
-                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</font></color></b><br>\r\n");
+                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</color></b></td><tr>\r\n");
                   }
               }
 
-            builder.append("<br>");
-            builder.append("<b>INPUT UDP:</b><br>\r\n");
+            builder.append("<tr><td></td></tr>\r\n");
+            builder.append("<tr><td><b>INPUT UDP:</b></td></tr>\r\n");
             for (int i = 0; i < CityLinkRTRMain.udpServerPool.size(); ++i)
               {
                 if (CityLinkRTRMain.udpServerPool.get(i).getIsEnabled() > 0)
@@ -170,17 +179,17 @@ public class MonitorHTTPServer
                     String pPort = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPort());
                     String pOk = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsOk());
                     String pErr = String.valueOf(CityLinkRTRMain.udpServerPool.get(i).getPacketsErrors());
-                    builder.append("UDP receiver <font color=#006699><b>");
+                    builder.append("<tr><td>UDP receiver <b>");
                     builder.append(pName);
                     builder.append(" [BindIP:" + pBindIP + "; ");
                     builder.append("Port:" + pPort + "; ");
                     builder.append("Packets OK:<font color=#009900>" + pOk + "</font>; ");
-                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</font></color></b><br>\r\n");
+                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</b></td></tr>\r\n");
                   }
               }
 
-            builder.append("<br>");
-            builder.append("<b>OUTPUT:</b><br>\r\n");
+            builder.append("<tr><td></td></tr>\r\n");
+            builder.append("<tr><td><b>OUTPUT:</b></td></tr>\r\n");
             for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
               {
                 if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
@@ -190,17 +199,17 @@ public class MonitorHTTPServer
                     String pPort = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPort());
                     String pOk = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPacketsOk());
                     String pErr = String.valueOf(CityLinkRTRMain.udpClientPool.get(i).getPacketsErrors());
-                    builder.append("UDP sender <font color=#006699><b>");
+                    builder.append("<tr><td>UDP sender <b>");
                     builder.append(pName);
                     builder.append(" [URL:" + pURL + "; ");
                     builder.append("Port:" + pPort + "; ");
                     builder.append("Packets OK:<font color=#009900>" + pOk + "</font>; ");
-                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</font></color></b><br>\r\n");
+                    builder.append("Errors:<font color=#ff0000>" + pErr + "</font>]</b></td></tr>\r\n");
                   }
               }
-            builder.append("<br>");
+            builder.append("<tr><td></td></tr>\r\n");
             builder.append(
-                "<form method='post'><tr><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>REFRESH</button>\r\n");
+                "<form method='post'><tr ><td>&nbsp<button type='submit' name ='refr_button' value='Refresh'>REFRESH</button>\r\n");
             builder.append(
                 "&nbsp<button type='submit' name ='reset_btn' value='Reset'>RESET COUNTERS</button></td></tr></form>\r\n");
 
