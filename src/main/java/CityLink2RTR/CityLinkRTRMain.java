@@ -38,22 +38,26 @@ class SendUDPClientRoutine extends TimerTask
     public void run()
       {
         byte[] sendArr;
-        int readyEvents = (MainEventBufer.getSize() > MAX_EVENTS_INPACKET) ? MAX_EVENTS_INPACKET
-            : MainEventBufer.getSize();
-        sendArr = new byte[readyEvents * EVENT_LENTH];
-        for (int i = 0; i < readyEvents; ++i)
+        int readyEvents;
+        while ((readyEvents = (MainEventBufer.getSize() > MAX_EVENTS_INPACKET) ? MAX_EVENTS_INPACKET
+            : MainEventBufer.getSize()) != 0)
           {
-            System.arraycopy(MainEventBufer.PollEvent().rawByteArray, 0, sendArr, EVENT_LENTH * i, EVENT_LENTH);
-          }
-        if (readyEvents > 0)
-          {
-            for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
+            sendArr = new byte[readyEvents * EVENT_LENTH];
+            for (int i = 0; i < readyEvents; ++i)
               {
-                if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
+                System.arraycopy(MainEventBufer.PollEvent().rawByteArray, 0, sendArr, EVENT_LENTH * i, EVENT_LENTH);
+              }
+
+            if (readyEvents > 0)
+              {
+                for (int i = 0; i < CityLinkRTRMain.udpClientPool.size(); ++i)
                   {
-                    CityLinkRTRMain.udpClientPool.get(i).sendUDPClient(sendArr);
-                    CityLinkRTRMain.udpClientPool.get(i)
-                        .setPacketsOk(CityLinkRTRMain.udpClientPool.get(i).getPacketsOk() + readyEvents);
+                    if (CityLinkRTRMain.udpClientPool.get(i).getIsEnabled() > 0)
+                      {
+                        CityLinkRTRMain.udpClientPool.get(i).sendUDPClient(sendArr);
+                        CityLinkRTRMain.udpClientPool.get(i)
+                            .setPacketsOk(CityLinkRTRMain.udpClientPool.get(i).getPacketsOk() + readyEvents);
+                      }
                   }
               }
           }
@@ -62,6 +66,7 @@ class SendUDPClientRoutine extends TimerTask
 
 public class CityLinkRTRMain
   {
+    public static final String VERS = "1.0.0.RELEASE";
     static ThreadedUDPServer UDPServ;
     static MonitorHTTPServer HTTP;
     public static final String INI_FILE_NAME = "rtrconfig.ini";
@@ -95,7 +100,8 @@ public class CityLinkRTRMain
     public static void main(String[] args)
       {
         // LogManager().readConfiguration(CityLinkRTRMain.class.getResourceAsStream("logging.properties"));
-        LOG.info("Start retranlator");
+        
+        LOG.info("Start retranslator ver:"+VERS);
         StartDate = new Date(); // fix start date
 
         MB = new MainEventBufer();
@@ -106,6 +112,8 @@ public class CityLinkRTRMain
         Timer udpClientSendTimer = new Timer();
         TimerTask udpClientSendTimerTask = new SendUDPClientRoutine();
 
+        
+        
         String filename = (args.length > 0) ? args[0] : INI_FILE_NAME;
         File conf = new File(filename);
         if (!conf.exists())
@@ -117,7 +125,7 @@ public class CityLinkRTRMain
                 ini = new Ini(conf);
                 ini.getConfig().setMultiSection(true);
                 ini.getConfig().setMultiOption(true);
-                ini.put("RTR", "version", "1.00");
+                ini.put("RTR", "version", VERS);
                 ini.put("RTR", "username", "Retranslator #1 at location");
 
                 ini.put("HTTP", "enabled", 1);
@@ -156,6 +164,7 @@ public class CityLinkRTRMain
             ini = new Ini(conf);
             ini.getConfig().setMultiSection(true);
             ini.getConfig().setMultiOption(true);
+            ini.put("RTR", "version", VERS);
           }
         catch (IOException e)
           {
@@ -250,7 +259,7 @@ public class CityLinkRTRMain
                       }
                     catch (Exception e)
                       {
-                        //LOG.log(Level.SEVERE, e.getMessage(), e);
+                        // LOG.log(Level.SEVERE, e.getMessage(), e);
                       }
 
                     Thread.sleep(50);
@@ -286,7 +295,7 @@ public class CityLinkRTRMain
         long s = ((delta % 86400) % 3600) % 60;
         String dur = String.format("%dD %d:%02d:%02d", d, h, m, s);
         builder.append("Uptime:" + dur + "\r\n");
-        
+
         if (CityLinkRTRMain.ini.get("HTTP", "enabled", int.class) > 0)
           {
             builder.append("HTTP web interface started on port "
@@ -350,7 +359,7 @@ public class CityLinkRTRMain
                 builder.append("Errors:" + pErr + "]\r\n");
               }
           }
-        
+
         System.out.println(builder.toString());
       }
 
