@@ -106,7 +106,7 @@ public class MonitorHTTPServer
             String javaVersion = System.getProperty("java.version");
 
             builder.append("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\r\n");
-            builder.append("<head><title>TRS RTR Ver_" + rtrVer + "</title>\r\n");
+            builder.append("<head><title>TRS RTR " + rtrVer + "</title>\r\n");
             builder.append("<meta http-equiv='Refresh' content='10' charset='utf-8'/>\r\n");
             builder.append("<style type=\"text/css\">\r\n"
                 + "  td {font-size:12pt;height:20px;font-family:Consolas,Monospase;color: #333333;}\r\n"
@@ -120,7 +120,7 @@ public class MonitorHTTPServer
             builder.append("<body>\r\n");
             builder.append("<table align ='center' width='800'>\r\n");
             builder.append(
-                "<tr><td align='left'><h3>Software serial to UDP retranslator 'CityLink'  JAVA edition</h3></td></tr>\r\n");
+                "<tr><td align='left'><h3>Software serial to UDP retranslator 'CityLink' "+rtrVer+" JAVA edition</h3></td></tr>\r\n");
             builder.append("</table>\r\n");
 
             builder.append("<div style='width:800px;padding:20px 10px;margin:auto;border:solid 1px #CCCCCC;'>\r\n");
