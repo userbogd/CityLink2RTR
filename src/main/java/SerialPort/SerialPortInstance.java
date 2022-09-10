@@ -4,17 +4,18 @@ public class SerialPortInstance
   {
     private int isEnabled;
     private String username, name;
-    private int baudrate;
+    private int baudrate, databytes;
     private long PacketsOk, PacketsErrors;
     private String State;
     private SerialPortReader sr;
     private boolean isRun;
 
-    public SerialPortInstance(int isEnabled, String username, String name, int baudrate)
+    public SerialPortInstance(int isEnabled, String username, String name, int baudrate, int databytes)
       {
         this.isEnabled = isEnabled;
         this.name = name;
         this.baudrate = baudrate;
+        this.databytes = (databytes == 13) ? 13 : 12;
         this.PacketsOk = 0;
         this.PacketsErrors = 0;
         this.State = "ERROR";
@@ -32,7 +33,7 @@ public class SerialPortInstance
 
     public void startSerialReader()
       {
-        sr = new SerialPortReader(this.name, this.baudrate, this);
+        sr = new SerialPortReader(this.name, this.baudrate, this.databytes,  this);
         setRun(true);
         new Thread(sr).start();
       }

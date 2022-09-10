@@ -144,8 +144,9 @@ public class CityLinkRTRMain
 
                 ini.put("SERIAL", "enabled", 0);
                 ini.put("SERIAL", "name", "Serial port name 1");
-                ini.put("SERIAL", "portname", "/dev/ttyUSB0");
+                ini.put("SERIAL", "port", "/dev/ttyUSB0");
                 ini.put("SERIAL", "baudrate", 19200);
+                ini.put("SERIAL", "databytes", 13);
 
                 ini.store();
               }
@@ -185,8 +186,9 @@ public class CityLinkRTRMain
           {
             SerialPortInstance sPort = new SerialPortInstance(Integer.parseInt(sec.get("enabled", i)),
                 sec.get("name", i),
-                sec.get("portname", i),
-                Integer.parseInt(sec.get("baudrate", i)));
+                sec.get("port", i),
+                Integer.parseInt(sec.get("baudrate", i)),
+                Integer.parseInt(sec.get("databytes", i)));
             serialPool.add(sPort);
             if (sPort.getIsEnabled() > 0)
               sPort.startSerialReader();

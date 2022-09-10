@@ -14,7 +14,7 @@ import CityLink2RTR.MainEventBufer;
 
 public class SerialPortReader implements Runnable
   {
-    public static final int EVENT_LENTH = 13;
+    public int packetLength = 13;
     public static final int PORT_RESTART_INTERVAL = 5;
     SerialPort comPort;
     String portName;
@@ -35,11 +35,12 @@ public class SerialPortReader implements Runnable
       }
     public static final Logger LOG = Logger.getLogger(SerialPortReader.class.getName());
 
-    public SerialPortReader(String Port, int Baudrate, SerialPortInstance sPort)
+    public SerialPortReader(String Port, int Baudrate, int datalength, SerialPortInstance sPort)
       {
         portName = new String(Port);
         portBaudrate = Baudrate;
         sPortInst = sPort;
+        packetLength = datalength;
       }
 
     public void stop()
@@ -75,7 +76,7 @@ public class SerialPortReader implements Runnable
                     comPort.writeBytes(arr, 3);
                     while (true)
                       {
-                        while (comPort.bytesAvailable() < EVENT_LENTH)
+                        while (comPort.bytesAvailable() < packetLength)
                           {
                             if (comPort.bytesAvailable() == -1)
                               throw new java.lang.RuntimeException("Port is closed unexpected!");
@@ -96,13 +97,13 @@ public class SerialPortReader implements Runnable
                         byte[] arr1 = new byte[comPort.bytesAvailable()];
                         comPort.readBytes(arr1, arr1.length);
                         int ptr = 0;
-                        while (ptr <= (arr1.length - EVENT_LENTH))
+                        while (ptr <= (arr1.length - packetLength))
                           {
                             if (arr1[ptr] == 0x34 && arr1[ptr + 10] == 0x0D)
                               {
                                 CityLinkEventPacket pt = new CityLinkEventPacket();
-                                System.arraycopy(arr1, ptr, pt.rawByteArray, 0, EVENT_LENTH);
-                                int tmp[] = new int[EVENT_LENTH];
+                                System.arraycopy(arr1, ptr, pt.rawByteArray, 0, packetLength);
+                                int tmp[] = new int[packetLength];
                                 Helpers.SignedBytesToUnsignedInt(pt.rawByteArray, tmp);
                                 if (Helpers.CheckCityLinkEventError(tmp) == 0)
                                   {
@@ -114,7 +115,7 @@ public class SerialPortReader implements Runnable
                                   {
                                     sPortInst.incPacketsError();
                                   }
-                                ptr += EVENT_LENTH;
+                                ptr += packetLength;
                               }
                             else
                               ++ptr;
